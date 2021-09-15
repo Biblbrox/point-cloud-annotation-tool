@@ -22,11 +22,14 @@ if(POLICY CMP0020)
     cmake_policy(SET CMP0020 NEW)
 endif()
 
-FIND_PACKAGE(VTK)
+find_package(VTK COMPONENTS
+        vtkGUISupportQt
+        vtkRenderingOpenGL2
+        REQUIRED)
 INCLUDE(${VTK_USE_FILE}) # include UseVTK.cmake
 message(STATUS "VTK_LIBRARIES: ${VTK_LIBRARIES}")
 
-find_package(PCL REQUIRED COMPONENTS)
+find_package(PCL REQUIRED segmentation filters visualization)
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
@@ -65,7 +68,7 @@ set(project_source
 
 
 add_executable(${PROJECT_NAME} ${project_source} ui_mainwindow.h)
-target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES} Qt5::Widgets)
+target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES} Qt5::Widgets vtkGUISupportQt)
 
 option(BUILD_TEST "build test exampes" ON)
 if (BUILD_TEST)

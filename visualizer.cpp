@@ -304,7 +304,7 @@ void Visualizer::KeyboardEventProcess(const KeyboardEvent& event)
     std::cout<<event.getKeySym()<<std::endl;
 
     // delete annotation
-    if (event.getKeySym()=="Delete" && currPickedAnnotation){
+    if (event.getKeySym()=="Delete" && currPickedAnnotation) {
         removeAnnotation(currPickedAnnotation);
     }
 }
@@ -316,7 +316,7 @@ void Visualizer::showAnnotation()
     }
 }
 
-void Visualizer::threshold(){
+void Visualizer::threshold() {
     double threhold_;
     if (ui->threshold_lineEdit->text().isEmpty()) return;
     threhold_=ui->threshold_lineEdit->text().toDouble();
@@ -332,7 +332,7 @@ void Visualizer::threshold(){
     updateCloud();
 }
 
-void Visualizer::planeDetect(){
+void Visualizer::planeDetect() {
     if (ui->distanceThreshold_lineEdit->text().isEmpty()) return;
     double  distanceThreshold=ui->distanceThreshold_lineEdit->text().toDouble();
 
@@ -399,7 +399,7 @@ void Visualizer::openFile()
 
     if (ext=="pcd"){
         pcl::io::loadPCDFile(pointcloudFileName,*cloud);
-    }else{
+    } else{
         loadBinFile(pointcloudFileName,*cloud);
     }
 
@@ -468,7 +468,7 @@ void Visualizer::removeAnnotation()
 
 void Visualizer::removeAnnotation(Annotation *anno)
 {
-    if (currPickedAnnotation){
+    if (currPickedAnnotation) {
         currPickedAnnotation->unpicked();
         currPickedAnnotation=NULL;
     }

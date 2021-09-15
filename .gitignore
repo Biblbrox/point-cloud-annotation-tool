@@ -3,4 +3,8 @@ build/
 *.user
 *.bin
 *.pro
-*.backup 
+*.backup
+cmake-build-debug
+Debug
+Release
+.idea
