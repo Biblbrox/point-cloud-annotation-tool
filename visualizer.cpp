@@ -34,54 +34,54 @@ using namespace std;
 
 Visualizer::Visualizer(QWidget *parent)
         : QMainWindow(parent),
-          ui(new Ui::MainWindow)
+          m_ui(new Ui::MainWindow)
 {
 
-    ui->setupUi(this);
+    m_ui->setupUi(this);
     this->setWindowTitle("3D annotation tool");
 
     initialize();
 
     // register selection http://www.pcl-users.org/Select-set-of-points-using-mouse-td3424113.html
 
-    viewer->registerKeyboardCallback(boost::bind(&Visualizer::KeyboardEventProcess, this, _1));
-    viewer->registerAreaPickingCallback(
+    m_viewer->registerKeyboardCallback(boost::bind(&Visualizer::KeyboardEventProcess, this, _1));
+    m_viewer->registerAreaPickingCallback(
             boost::bind(&Visualizer::AreaPickingEventProcess, this, _1));
-    viewer->registerMouseCallback(boost::bind(&Visualizer::MouseEventProcess, this, _1));
+    m_viewer->registerMouseCallback(boost::bind(&Visualizer::MouseEventProcess, this, _1));
 
     // UI
-    connect(ui->action_Open, &QAction::triggered, this, &Visualizer::openFile);
-    connect(ui->action_Save, &QAction::triggered, this, &Visualizer::save);
-    connect(ui->action_detect_plane, &QAction::triggered, ui->PlaneDetect_dockWidget,
+    connect(m_ui->action_Open, &QAction::triggered, this, &Visualizer::openFile);
+    connect(m_ui->action_Save, &QAction::triggered, this, &Visualizer::save);
+    connect(m_ui->action_detect_plane, &QAction::triggered, m_ui->PlaneDetect_dockWidget,
             &QDockWidget::show);
-    connect(ui->action_Threshold, &QAction::triggered, ui->threshold_dockWidget,
+    connect(m_ui->action_Threshold, &QAction::triggered, m_ui->threshold_dockWidget,
             &QDockWidget::show);
 
-    ui->PlaneDetect_dockWidget->hide();
-    ui->distanceThreshold_lineEdit->setText("0.1");
-    ui->distanceThreshold_lineEdit->setValidator(new QDoubleValidator(-5, 5, 2));
-    connect(ui->applyPlaneDetection_pushButton, &QPushButton::clicked, this,
+    m_ui->PlaneDetect_dockWidget->hide();
+    m_ui->distanceThreshold_lineEdit->setText("0.1");
+    m_ui->distanceThreshold_lineEdit->setValidator(new QDoubleValidator(-5, 5, 2));
+    connect(m_ui->applyPlaneDetection_pushButton, &QPushButton::clicked, this,
             &Visualizer::planeDetect);
 
-    ui->threshold_dockWidget->hide();
-    ui->threshold_lineEdit->setText("-1.5");
-    ui->threshold_lineEdit->setValidator(new QDoubleValidator(-100, 100, 2));
-    connect(ui->threshold_pushButton, &QPushButton::clicked, this, &Visualizer::threshold);
+    m_ui->threshold_dockWidget->hide();
+    m_ui->threshold_lineEdit->setText("-1.5");
+    m_ui->threshold_lineEdit->setValidator(new QDoubleValidator(-100, 100, 2));
+    connect(m_ui->threshold_pushButton, &QPushButton::clicked, this, &Visualizer::threshold);
 }
 
 Visualizer::~Visualizer()
 {
-    delete ui;
+    delete m_ui;
 }
 
 void Visualizer::initialize()
 {
     // init viewer
-    viewer.reset(new PCLViewer("", false));
+    m_viewer.reset(new PCLViewer("", false));
     // BUG under windows, this cause execution exception
-    ui->qvtkWidget->SetRenderWindow(viewer->getRenderWindow());
-    viewer->setupInteractor(ui->qvtkWidget->GetInteractor(), ui->qvtkWidget->GetRenderWindow());
-    ui->qvtkWidget->update();
+    m_ui->qvtkWidget->SetRenderWindow(m_viewer->getRenderWindow());
+    m_viewer->setupInteractor(m_ui->qvtkWidget->GetInteractor(), m_ui->qvtkWidget->GetRenderWindow());
+    m_ui->qvtkWidget->update();
 
     // init label type
     Annotation::getTypes()->clear();
@@ -104,40 +104,40 @@ void Visualizer::initialize()
         button->update();
         layout->addWidget(button);
     }
-    ui->groupBox_Types->setLayout(layout);
-    ui->groupBox_Types->setMaximumWidth(200);
-    ui->groupBox_Types->setMaximumHeight(200);
+    m_ui->groupBox_Types->setLayout(layout);
+    m_ui->groupBox_Types->setMaximumWidth(200);
+    m_ui->groupBox_Types->setMaximumHeight(200);
 
 
     //init annotation
-    annoManager.reset(new Annotations());
-    currPickedAnnotation = NULL;
+    m_annoManager.reset(new Annotations());
+    m_currPickedAnnotation = NULL;
 
     //axes
     vtkSmartPointer<vtkAxesActor> axes =
             vtkSmartPointer<vtkAxesActor>::New();
-    axesWidget = vtkSmartPointer<vtkOrientationMarkerWidget>::New();
-    axesWidget->SetOrientationMarker(axes);
-//    axesWidget->SetInteractor( viewer->getInteractorStyle()->GetInteractor() );
-    axesWidget->SetInteractor(viewer->getRenderWindowInteractor());
-    axesWidget->SetViewport(0.0, 0.0, 0.2, 0.2);
-    axesWidget->SetEnabled(1);
-    axesWidget->InteractiveOff();
+    m_axesWidget = vtkSmartPointer<vtkOrientationMarkerWidget>::New();
+    m_axesWidget->SetOrientationMarker(axes);
+//  m_axesWidget->SetInteractor( viewer->getInteractorStyle()->GetInteractor() );
+    m_axesWidget->SetInteractor(m_viewer->getRenderWindowInteractor());
+    m_axesWidget->SetViewport(0.0, 0.0, 0.2, 0.2);
+    m_axesWidget->SetEnabled(1);
+    m_axesWidget->InteractiveOff();
 
     // init cloud
-    cloud.reset(new PointCloudT);
-    cloudLabel = NULL;
+    m_cloud.reset(new PointCloudT);
+    m_cloudLabel = NULL;
 }
 
 void Visualizer::refresh()
 {
-    cloudLabel = new int[cloud->size()];
-    memset(cloudLabel, 0, cloud->size() * sizeof(int));
+    m_cloudLabel = new int[m_cloud->size()];
+    memset(m_cloudLabel, 0, m_cloud->size() * sizeof(int));
 
-    ui->label_filename->setText(QString::fromStdString(pointcloudFileName));
-    colorHandler.setInputCloud(cloud);
-    colorHandler.setLabel(cloudLabel);
-    viewer->addPointCloud<PointT>(cloud, colorHandler, "cloud", 0);
+    m_ui->label_filename->setText(QString::fromStdString(m_pointcloudFileName));
+    m_colorHandler.setInputCloud(m_cloud);
+    m_colorHandler.setLabel(m_cloudLabel);
+    m_viewer->addPointCloud<PointT>(m_cloud, m_colorHandler, "cloud", 0);
 
 //    // show cloud
 //    //http://www.pcl-users.org/how-to-add-color-to-a-xyz-cloud-td4040030.html
@@ -148,8 +148,8 @@ void Visualizer::refresh()
 //    PointCloudColorHandlerLabelField<PointT> colorHandler;
 //    colorHandler.
 
-    viewer->resetCamera();
-    ui->qvtkWidget->update();
+    m_viewer->resetCamera();
+    m_ui->qvtkWidget->update();
 
     // show annotation if exists
     showAnnotation();
@@ -159,17 +159,17 @@ void Visualizer::pickAnnotation(double x, double y)
 {
     vtkSmartPointer<vtkPropPicker> picker =
             vtkSmartPointer<vtkPropPicker>::New();
-    picker->Pick(x, y, 0, viewer->getRendererCollection()->GetFirstRenderer());
+    picker->Pick(x, y, 0, m_viewer->getRendererCollection()->GetFirstRenderer());
     vtkActor *pickedActor = picker->GetActor();
 
-    if (currPickedAnnotation) {
-        currPickedAnnotation->unpicked();
-        currPickedAnnotation = NULL;
+    if (m_currPickedAnnotation) {
+        m_currPickedAnnotation->unpicked();
+        m_currPickedAnnotation = NULL;
     }
     // get the correspond annotation
-    currPickedAnnotation = annoManager->getAnnotation(pickedActor);
-    if (currPickedAnnotation) {
-        currPickedAnnotation->picked(viewer->getRenderWindowInteractor());
+    m_currPickedAnnotation = m_annoManager->getAnnotation(pickedActor);
+    if (m_currPickedAnnotation) {
+        m_currPickedAnnotation->picked(m_viewer->getRenderWindowInteractor());
     }
 
 }
@@ -179,7 +179,7 @@ void Visualizer::highlightPoint(std::vector<int> &slice)
     if (slice.size() < 1) return;
 
     for (std::vector<int>::iterator it = slice.begin(); it != slice.end(); it++) {
-        cloudLabel[*it] = SELECTED_POINT;
+        m_cloudLabel[*it] = SELECTED_POINT;
     }
 }
 
@@ -187,10 +187,10 @@ void Visualizer::highlightPoint(std::vector<int> &slice)
 void Visualizer::defaultColorPoint(std::vector<int> &slice)
 {
     if (slice.empty())
-        memset(cloudLabel, DEFAULT_POINT, cloud->size() * sizeof(int));
+        memset(m_cloudLabel, DEFAULT_POINT, m_cloud->size() * sizeof(int));
 
     for (int &it : slice)
-        cloudLabel[it] = DEFAULT_POINT;
+        m_cloudLabel[it] = DEFAULT_POINT;
 }
 
 void Visualizer::groundColorPoint(std::vector<int> &slice)
@@ -199,17 +199,17 @@ void Visualizer::groundColorPoint(std::vector<int> &slice)
         return;
 
     for (int &it : slice)
-        cloudLabel[it] = GROUND_POINT;
+        m_cloudLabel[it] = GROUND_POINT;
 }
 
 
 void Visualizer::createAnnotationFromSelectPoints(string type)
 {
-    if (last_selected_slice.size() > 3) {
-        Annotation *anno = new Annotation(cloud, last_selected_slice, type);
-        annoManager->push_back(anno);
+    if (m_last_selected_slice.size() > 3) {
+        Annotation *anno = new Annotation(m_cloud, m_last_selected_slice, type);
+        m_annoManager->push_back(anno);
         showAnnotation(anno);
-        ui->qvtkWidget->update();
+        m_ui->qvtkWidget->update();
     } else {
         std::printf("%s", "no points selected");
     }
@@ -218,21 +218,21 @@ void Visualizer::createAnnotationFromSelectPoints(string type)
 void Visualizer::typeButtonClickedProcess(string type)
 {
     // QMessageBox::information(this, QString::fromStdString("information"),QString::fromStdString(type));
-    if (currPickedAnnotation) {
-        currPickedAnnotation->setType(type);
-        ui->qvtkWidget->update();
+    if (m_currPickedAnnotation) {
+        m_currPickedAnnotation->setType(type);
+        m_ui->qvtkWidget->update();
         return;
     }
 
-    if (last_selected_slice.size() > 3) {
+    if (m_last_selected_slice.size() > 3) {
         createAnnotationFromSelectPoints(type);
     }
 }
 
 void Visualizer::updateCloud()
 {
-    viewer->updatePointCloud<PointT>(cloud, colorHandler, "cloud");
-    ui->qvtkWidget->update();
+    m_viewer->updatePointCloud<PointT>(m_cloud, m_colorHandler, "cloud");
+    m_ui->qvtkWidget->update();
 }
 
 vector<int> intersectionVector(vector<int> &a, vector<int> &b)
@@ -268,34 +268,34 @@ void Visualizer::AreaPickingEventProcess(const pcl::visualization::AreaPickingEv
 
     if (new_selected_slice.empty()) return;
 
-    int s = viewer->getRenderWindowInteractor()->GetShiftKey();
-    int a = viewer->getRenderWindowInteractor()->GetControlKey();
+    int s = m_viewer->getRenderWindowInteractor()->GetShiftKey();
+    int a = m_viewer->getRenderWindowInteractor()->GetControlKey();
 
     // remove ground points
     vector<int> r;
     for (auto x:new_selected_slice) {
-        if (cloudLabel[x] != GROUND_POINT) {
+        if (m_cloudLabel[x] != GROUND_POINT) {
             r.push_back(x);
         }
     }
     new_selected_slice = r;
 
-    if (!last_selected_slice.empty()) {
-        defaultColorPoint(last_selected_slice);
+    if (!m_last_selected_slice.empty()) {
+        defaultColorPoint(m_last_selected_slice);
     }
 
     if (s && a) { // intersection
-        last_selected_slice = intersectionVector(last_selected_slice, new_selected_slice);
+        m_last_selected_slice = intersectionVector(m_last_selected_slice, new_selected_slice);
     } else if (s) { // union
-        last_selected_slice = unionVector(last_selected_slice, new_selected_slice);
+        m_last_selected_slice = unionVector(m_last_selected_slice, new_selected_slice);
     } else if (a) { // remove
-        last_selected_slice = diffVector(last_selected_slice, new_selected_slice);
+        m_last_selected_slice = diffVector(m_last_selected_slice, new_selected_slice);
     } else { // new
-        last_selected_slice = new_selected_slice;
+        m_last_selected_slice = new_selected_slice;
     }
 
 
-    highlightPoint(last_selected_slice);
+    highlightPoint(m_last_selected_slice);
     updateCloud();
 }
 
@@ -313,14 +313,14 @@ void Visualizer::KeyboardEventProcess(const KeyboardEvent &event)
     std::cout << event.getKeySym() << std::endl;
 
     // delete annotation
-    if (event.getKeySym() == "Delete" && currPickedAnnotation) {
-        removeAnnotation(currPickedAnnotation);
+    if (event.getKeySym() == "Delete" && m_currPickedAnnotation) {
+        removeAnnotation(m_currPickedAnnotation);
     }
 }
 
 void Visualizer::showAnnotation()
 {
-    for (auto anno:annoManager->getAnnotations()) {
+    for (auto anno:m_annoManager->getAnnotations()) {
         showAnnotation(anno);
     }
 }
@@ -328,24 +328,24 @@ void Visualizer::showAnnotation()
 void Visualizer::threshold()
 {
     double threhold_;
-    if (ui->threshold_lineEdit->text().isEmpty()) return;
-    threhold_ = ui->threshold_lineEdit->text().toDouble();
+    if (m_ui->threshold_lineEdit->text().isEmpty()) return;
+    threhold_ = m_ui->threshold_lineEdit->text().toDouble();
 
     vector<int> slice;
-    for (int i = 0; i < cloud->size(); i++) {
-        if (cloud->points[i].z < threhold_) {
+    for (int i = 0; i < m_cloud->size(); i++) {
+        if (m_cloud->points[i].z < threhold_) {
             slice.push_back(i);
         }
     }
-    memset(cloudLabel, DEFAULT_POINT, cloud->size() * sizeof(int));
+    memset(m_cloudLabel, DEFAULT_POINT, m_cloud->size() * sizeof(int));
     groundColorPoint(slice);
     updateCloud();
 }
 
 void Visualizer::planeDetect()
 {
-    if (ui->distanceThreshold_lineEdit->text().isEmpty()) return;
-    double distanceThreshold = ui->distanceThreshold_lineEdit->text().toDouble();
+    if (m_ui->distanceThreshold_lineEdit->text().isEmpty()) return;
+    double distanceThreshold = m_ui->distanceThreshold_lineEdit->text().toDouble();
 
     pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
     pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
@@ -357,12 +357,12 @@ void Visualizer::planeDetect()
     seg.setModelType(pcl::SACMODEL_PLANE);
     seg.setMethodType(pcl::SAC_RANSAC);
     seg.setDistanceThreshold(distanceThreshold);
-    seg.setInputCloud(cloud);
+    seg.setInputCloud(m_cloud);
     seg.segment(*inliers, *coefficients);
 
     std::cout << "plane detection: " << inliers->indices.size() << std::endl;
 
-    memset(cloudLabel, DEFAULT_POINT, cloud->size() * sizeof(int));
+    memset(m_cloudLabel, DEFAULT_POINT, m_cloud->size() * sizeof(int));
     groundColorPoint(inliers->indices);
     updateCloud();
 
@@ -402,33 +402,33 @@ void Visualizer::planeDetect()
 void Visualizer::openFile()
 {
     QString homeDir = QStandardPaths::displayName(QStandardPaths::HomeLocation);
-    pointcloudFileName = QFileDialog::getOpenFileName(this, tr("Open PCD file"), homeDir,
+    m_pointcloudFileName = QFileDialog::getOpenFileName(this, tr("Open PCD file"), homeDir,
                                                       tr("PCD Files (*.pcd *.bin)")).toStdString();
-    calMatrixFileName = QFileDialog::getOpenFileName(this, tr("Open calibration matrix file"),
+    m_calMatrixFileName = QFileDialog::getOpenFileName(this, tr("Open calibration matrix file"),
                                                      homeDir,
                                                      tr("Txt Files (*.txt)")).toStdString();
-    if (pointcloudFileName.empty()) return;
+    if (m_pointcloudFileName.empty()) return;
 
     clear();
-    QFileInfo file(QString::fromStdString(pointcloudFileName));
+    QFileInfo file(QString::fromStdString(m_pointcloudFileName));
     QString ext = file.completeSuffix();  // ext = "bin" ,"pcd"
 
     if (ext == "pcd") {
-        pcl::io::loadPCDFile(pointcloudFileName, *cloud);
+        pcl::io::loadPCDFile(m_pointcloudFileName, *m_cloud);
     } else {
-        loadBinFile(pointcloudFileName, *cloud);
+        loadBinFile(m_pointcloudFileName, *m_cloud);
     }
 
-    std::cout << pointcloudFileName << "cloud point loaded" << endl;
-    std::cout << "cloud point number: " << cloud->width * cloud->height << endl;
+    std::cout << m_pointcloudFileName << "cloud point loaded" << endl;
+    std::cout << "cloud point number: " << m_cloud->width * m_cloud->height << endl;
 
-    annotationFileName = pointcloudFileName + ".txt";
-    if (QFile::exists(QString::fromStdString(annotationFileName))) {
-        annoManager->loadAnnotations(annotationFileName);
+    m_annotationFileName = m_pointcloudFileName + ".txt";
+    if (QFile::exists(QString::fromStdString(m_annotationFileName))) {
+        m_annoManager->loadAnnotations(m_annotationFileName);
     }
 
     // Load calibration matrix
-    calMatrix = loadMatFromFile(calMatrixFileName);
+    m_calMatrix = loadMatFromFile(m_calMatrixFileName);
 
     refresh();
 }
@@ -436,21 +436,21 @@ void Visualizer::openFile()
 void Visualizer::clear()
 {
     removeAnnotation();
-    viewer->removeAllPointClouds();
-    annoManager->clear();
+    m_viewer->removeAllPointClouds();
+    m_annoManager->clear();
 
-    currPickedAnnotation = NULL;
-    last_selected_slice.clear();
+    m_currPickedAnnotation = NULL;
+    m_last_selected_slice.clear();
 
-    if (cloudLabel) {
-        delete[] cloudLabel;
-        cloudLabel = NULL;
+    if (m_cloudLabel) {
+        delete[] m_cloudLabel;
+        m_cloudLabel = NULL;
     }
 }
 
 void Visualizer::save()
 {
-    annoManager->saveAnnotations(annotationFileName);
+    m_annoManager->saveAnnotations(m_annotationFileName);
 }
 
 void Visualizer::loadBinFile(string filename_, PointCloudT &cloud_)
@@ -475,22 +475,22 @@ void Visualizer::loadBinFile(string filename_, PointCloudT &cloud_)
 
 void Visualizer::showAnnotation(const Annotation *anno)
 {
-    viewer->addActorToRenderer(anno->getActor());
+    m_viewer->addActorToRenderer(anno->getActor());
 }
 
 void Visualizer::removeAnnotation()
 {
-    for (auto anno:annoManager->getAnnotations())
+    for (auto anno:m_annoManager->getAnnotations())
         removeAnnotation(anno);
 }
 
 void Visualizer::removeAnnotation(Annotation *anno)
 {
-    if (currPickedAnnotation) {
-        currPickedAnnotation->unpicked();
-        currPickedAnnotation = NULL;
+    if (m_currPickedAnnotation) {
+        m_currPickedAnnotation->unpicked();
+        m_currPickedAnnotation = NULL;
     }
-    viewer->removeActorFromRenderer(anno->getActor());
+    m_viewer->removeActorFromRenderer(anno->getActor());
 }
 
 Eigen::MatrixXd Visualizer::loadMatFromFile(const std::string& fileName) const

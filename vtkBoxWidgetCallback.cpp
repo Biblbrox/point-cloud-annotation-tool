@@ -17,15 +17,15 @@ void vtkBoxWidgetCallback0::Execute(vtkObject *caller, unsigned long, void *)
     vtkBoxWidget *widget = reinterpret_cast<vtkBoxWidget*>(caller);
 
     widget->GetTransform( t );
-    if (anno){
+    if (m_anno){
         // widget->GetProp3D()->SetUserTransform(t);
-        anno->applyTransform(t);
+        m_anno->applyTransform(t);
 
     }
 }
 
 void vtkBoxWidgetCallback0::setAnno(Annotation *value){
-    anno = value;
+    m_anno = value;
 }
 
 
@@ -36,12 +36,11 @@ vtkBoxWidgetCallback1 *vtkBoxWidgetCallback1::New()
 
 void vtkBoxWidgetCallback1::Execute(vtkObject *caller, unsigned long, void *)
 {
-    if (anno){
-        anno->adjustToAnchor();
-    }
+    if (m_anno)
+        m_anno->adjustToAnchor();
 }
 
 void vtkBoxWidgetCallback1::setAnno(Annotation *value)
 {
-    anno=value;
+    m_anno = value;
 }

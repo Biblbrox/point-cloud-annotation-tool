@@ -26,24 +26,24 @@ public:
     void updateCloud();
 
 protected:
-    Ui::MainWindow* ui;
-    PCLViewerPtr viewer;
-    string pointcloudFileName;
-    string annotationFileName;
-    string calMatrixFileName;
-    Eigen::MatrixXd calMatrix;
+    Ui::MainWindow* m_ui;
+    PCLViewerPtr m_viewer;
+    string m_pointcloudFileName;
+    string m_annotationFileName;
+    string m_calMatrixFileName;
+    Eigen::MatrixXd m_calMatrix;
     /**
      * @brief the loaded cloud
      */
-    PointCloudTPtr cloud;
+    PointCloudTPtr m_cloud;
     /**
      * @brief state of each point to identity color or selectable
      */
-    int* cloudLabel;
-    PointCloudColorHandlerLUT<PointT> colorHandler;
-    vector<int> last_selected_slice;
+    int* m_cloudLabel;
+    PointCloudColorHandlerLUT<PointT> m_colorHandler;
+    vector<int> m_last_selected_slice;
     // manage annotations
-    boost::shared_ptr<Annotations> annoManager;
+    boost::shared_ptr<Annotations> m_annoManager;
 
     /**
      * @brief show loaded cloud and annotations
@@ -90,10 +90,10 @@ private:
     Eigen::MatrixXd loadMatFromFile(const std::string& fileName) const;
 
     // axes
-    vtkSmartPointer<vtkOrientationMarkerWidget> axesWidget;
+    vtkSmartPointer<vtkOrientationMarkerWidget> m_axesWidget;
 
     // for pick
-    Annotation *currPickedAnnotation;
+    Annotation *m_currPickedAnnotation;
 };
 
 #endif // VISUALIZER_H

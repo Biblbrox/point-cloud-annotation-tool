@@ -6,10 +6,10 @@
 using namespace std;
 
 Annotation::Annotation(const BoxLabel &label, bool visible_, bool lock_)
-        : visible(visible_), lock(lock_)
+        : m_visible(visible_), m_lock(lock_)
 {
-    //type
-    type = label.type;
+    //m_type
+    m_type = label.type;
 
     // init variable
     initial();
@@ -34,7 +34,7 @@ Annotation::Annotation(const PointCloudTPtr cloud, vector<int> &slice, string ty
 
     setAnchorPoint(cloud, slice);
 
-    this->type = type_;
+    m_type = type_;
 
     // init variable
     initial();
@@ -56,23 +56,23 @@ Annotation::Annotation(const PointCloudTPtr cloud, vector<int> &slice, string ty
 Annotation::~Annotation()
 {
     // release anchorPoints
-    for (auto p:anchorPoints)
+    for (auto p: m_anchorPoints)
         delete[] p;
 
-    anchorPoints.clear();
+    m_anchorPoints.clear();
 }
 
 BoxLabel Annotation::getBoxLabel()
 {
     BoxLabel label;
-    label.type = type;
+    label.type = m_type;
 
     double pos[3];
     double scale[3];
     double orientation[3];
-    transform->GetPosition(pos);
-    transform->GetScale(scale);
-    transform->GetOrientation(orientation);
+    m_transform->GetPosition(pos);
+    m_transform->GetScale(scale);
+    m_transform->GetOrientation(orientation);
     memcpy(label.data, pos, 3 * sizeof(double));
     memcpy(label.data + 3, scale, 3 * sizeof(double));
     label.detail.yaw = orientation[2] / 180 * vtkMath::Pi();
@@ -81,23 +81,23 @@ BoxLabel Annotation::getBoxLabel()
 
 void Annotation::applyTransform(vtkSmartPointer<vtkTransform> t)
 {
-    if (t == transform) return;
+    if (t == m_transform) return;
 
-    transform = t;
-    actor->SetUserTransform(t);
+    m_transform = t;
+    m_actor->SetUserTransform(t);
 
 }
 
 void Annotation::picked(vtkRenderWindowInteractor *interactor)
 {
     // enable box widget
-    boxWidget = vtkSmartPointer<vtkBoxWidgetRestricted>::New();
-    boxWidgetCallback0 = vtkSmartPointer<vtkBoxWidgetCallback0>::New();
-    boxWidgetCallback0->setAnno(this);
-    boxWidgetCallback1 = vtkSmartPointer<vtkBoxWidgetCallback1>::New();
-    boxWidgetCallback1->setAnno(this);
+    m_boxWidget = vtkSmartPointer<vtkBoxWidgetRestricted>::New();
+    m_boxWidgetCallback0 = vtkSmartPointer<vtkBoxWidgetCallback0>::New();
+    m_boxWidgetCallback0->setAnno(this);
+    m_boxWidgetCallback1 = vtkSmartPointer<vtkBoxWidgetCallback1>::New();
+    m_boxWidgetCallback1->setAnno(this);
 
-    boxWidget->SetInteractor(interactor);
+    m_boxWidget->SetInteractor(interactor);
     // boxWidget->SetProp3D( cubeActor );
     // boxWidget->SetPlaceFactor( 1.25 ); // Make the box 1.25x larger than the actor
     // boxWidget->PlaceWidget();
@@ -106,35 +106,35 @@ void Annotation::picked(vtkRenderWindowInteractor *interactor)
     // [-1,1] makes boxwidget fit to annotion,
     // but [-0.5, 0.5] should be in the correct way, may be some bug
     double bounds[6] = {-1, 1, -1, 1, -1, 1};
-    boxWidget->PlaceWidget(bounds);
+    m_boxWidget->PlaceWidget(bounds);
 
     vtkSmartPointer<vtkTransform> t = vtkSmartPointer<vtkTransform>::New();
-    t->DeepCopy(actor->GetUserTransform());
-    boxWidget->SetTransform(t);
-    boxWidget->SetHandleSize(0.01);
-    boxWidget->GetOutlineProperty()->SetAmbientColor(1.0, 0.0, 0.0);
+    t->DeepCopy(m_actor->GetUserTransform());
+    m_boxWidget->SetTransform(t);
+    m_boxWidget->SetHandleSize(0.01);
+    m_boxWidget->GetOutlineProperty()->SetAmbientColor(1.0, 0.0, 0.0);
 
-    boxWidget->AddObserver(vtkCommand::InteractionEvent, boxWidgetCallback0);
-    boxWidget->AddObserver(vtkCommand::EndInteractionEvent, boxWidgetCallback1);
-    boxWidget->On();
+    m_boxWidget->AddObserver(vtkCommand::InteractionEvent, m_boxWidgetCallback0);
+    m_boxWidget->AddObserver(vtkCommand::EndInteractionEvent, m_boxWidgetCallback1);
+    m_boxWidget->On();
 }
 
 void Annotation::unpicked()
 {
-    boxWidget->Off();
+    m_boxWidget->Off();
 }
 
 void Annotation::adjustToAnchor()
 {
-    if (anchorPoints.empty())
+    if (m_anchorPoints.empty())
         return;
 
-    transform->GetPosition(center);
+    m_transform->GetPosition(m_center);
 
     double r[3], x[3], y[3], z[3] = {0, 0, 1};
     double s[3]; // scale
 
-    transform->GetOrientation(r);
+    m_transform->GetOrientation(r);
     x[0] = cos(vtkMath::RadiansFromDegrees(r[2]));
     x[1] = sin(vtkMath::RadiansFromDegrees(r[2]));
     x[2] = 0; // direction
@@ -149,48 +149,48 @@ void Annotation::adjustToAnchor()
     vtkMath::MultiplyScalar(z, scs[1]);
 
     // apply center shift
-    vtkMath::Add(center, x, center);
-    vtkMath::Add(center, y, center);
-    vtkMath::Add(center, z, center);
+    vtkMath::Add(m_center, x, m_center);
+    vtkMath::Add(m_center, y, m_center);
+    vtkMath::Add(m_center, z, m_center);
 
     vtkSmartPointer<vtkTransform> t = vtkSmartPointer<vtkTransform>::New();
-    t->Translate(center);
+    t->Translate(m_center);
     t->RotateZ(r[2]);
     t->Scale(s);
 
     //        transform->Scale(s);
-    boxWidget->SetTransform(t);
+    m_boxWidget->SetTransform(t);
     applyTransform(t);
 }
 
 
 string Annotation::getType() const
 {
-    return type;
+    return m_type;
 }
 
 void Annotation::setType(const string value)
 {
-    if (value != type) {
-        type = value;
+    if (value != m_type) {
+        m_type = value;
         colorAnnotation();
     }
 }
 
 vtkSmartPointer<vtkActor> Annotation::getActor() const
 {
-    return actor;
+    return m_actor;
 }
 
 void Annotation::initial()
 {
     // Cube
-    source = vtkSmartPointer<vtkAnnotationBoxSource>::New();
-    mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-    mapper->SetInputConnection(source->GetOutputPort());
-    actor = vtkSmartPointer<vtkActor>::New();
-    actor->SetMapper(mapper);
-    transform = vtkSmartPointer<vtkTransform>::New();
+    m_source = vtkSmartPointer<vtkAnnotationBoxSource>::New();
+    m_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    m_mapper->SetInputConnection(m_source->GetOutputPort());
+    m_actor = vtkSmartPointer<vtkActor>::New();
+    m_actor->SetMapper(m_mapper);
+    m_transform = vtkSmartPointer<vtkTransform>::New();
     colorAnnotation();
 }
 
@@ -200,7 +200,7 @@ void Annotation::colorAnnotation(int color_index)
     lut->SetNumberOfTableValues(2);
     lut->Build();
     if (color_index < 0) {
-        pcl::RGB c = getColor(type);
+        pcl::RGB c = getColor(m_type);
         lut->SetTableValue(0, c.r / 255.0, c.g / 255.0, c.b / 255.0, 0);
         lut->SetTableValue(1, c.r / 255.0, c.g / 255.0, c.b / 255.0, 1);
     } else {
@@ -225,24 +225,24 @@ void Annotation::colorAnnotation(int color_index)
     // plusX face
     cellData->InsertValue(12, 1);
 
-    source->Update();
-    source->GetOutput()->GetCellData()->SetScalars(cellData);
+    m_source->Update();
+    m_source->GetOutput()->GetCellData()->SetScalars(cellData);
 
-    actor->GetProperty()->SetLineWidth(2);
-    actor->GetProperty()->SetLighting(false);
+    m_actor->GetProperty()->SetLineWidth(2);
+    m_actor->GetProperty()->SetLighting(false);
 
-    mapper->SetLookupTable(lut);
+    m_mapper->SetLookupTable(lut);
 }
 
 void Annotation::setAnchorPoint(const PointCloudTPtr cloud, const vector<int> &slice)
 {
-    anchorPoints.clear();
+    m_anchorPoints.clear();
     for (auto i:slice) {
         double *p = new double[3];
         p[0] = cloud->points[i].x;
         p[1] = cloud->points[i].y;
         p[2] = cloud->points[i].z;
-        anchorPoints.push_back(p);
+        m_anchorPoints.push_back(p);
     }
 }
 
@@ -255,8 +255,8 @@ double Annotation::computeScaleAndCenterShift(double o[], double scs[])
     b = std::numeric_limits<double>::max();
 
     double t[3];
-    for (auto x:anchorPoints) {
-        vtkMath::Subtract(x, this->center, t);
+    for (auto x: m_anchorPoints) {
+        vtkMath::Subtract(x, m_center, t);
         double s = vtkMath::Dot(t, o);
         a = std::max(a, s);
         b = std::min(b, s);
@@ -268,16 +268,16 @@ double Annotation::computeScaleAndCenterShift(double o[], double scs[])
 
 vector<string> *Annotation::getTypes()
 {
-    return types;
+    return m_types;
 }
 
 int Annotation::getTypeIndex(string type_)
 {
-    for (int i = 0; i < types->size(); i++)
-        if (types->at(i) == type_) return i;
+    for (int i = 0; i < m_types->size(); i++)
+        if (m_types->at(i) == type_) return i;
 
-    types->push_back(type_);
-    return types->size() - 1;
+    m_types->push_back(type_);
+    return m_types->size() - 1;
 }
 
 pcl::RGB Annotation::getColor(string type_)
@@ -310,12 +310,12 @@ Annotation::computeOBB(const PointCloudTPtr cloud, vector<int> &slice, double p1
 }
 
 // static variable
-vector<string> *Annotation::types = new vector<string>();
+vector<string> *Annotation::m_types = new vector<string>();
 
 
 Annotation *Annotations::getAnnotation(vtkActor *actor)
 {
-    for (auto *anno : annotations)
+    for (auto *anno : m_annotations)
         if (anno->getActor() == actor)
             return anno;
 
@@ -324,30 +324,31 @@ Annotation *Annotations::getAnnotation(vtkActor *actor)
 
 void Annotations::push_back(Annotation *anno)
 {
-    annotations.push_back(anno);
+    m_annotations.push_back(anno);
 }
 
 void Annotations::remove(Annotation *anno)
 {
-    annotations.erase(std::remove(annotations.begin(), annotations.end(), anno), annotations.end());
+    m_annotations.erase(std::remove(m_annotations.begin(), m_annotations.end(), anno),
+                        m_annotations.end());
 }
 
 void Annotations::clear()
 {
-    for (auto p:annotations)
+    for (auto p:m_annotations)
         delete p;
 
-    annotations.clear();
+    m_annotations.clear();
 }
 
 int Annotations::getSize()
 {
-    return annotations.size();
+    return m_annotations.size();
 }
 
 void Annotations::loadAnnotations(string filename)
 {
-    annotations.clear();
+    m_annotations.clear();
 
     std::ifstream input(filename.c_str(), std::ios_base::in);
     if (!input.good()) {
@@ -361,18 +362,20 @@ void Annotations::loadAnnotations(string filename)
         for (double &j : label.data)
             input >> j;
 
-        annotations.push_back(new Annotation(label));
+        m_annotations.push_back(new Annotation(label));
     }
-    std::cout << filename << ": load " << annotations.size() << " boxes" << std::endl;
+    std::cout << filename << ": load " << m_annotations.size() << " boxes" << std::endl;
     input.close();
 }
 
 void Annotations::saveAnnotations(string filename)
 {
-    if (annotations.empty()) return;
+    if (m_annotations.empty())
+        return;
+
     std::ofstream output(filename.c_str(), std::ios_base::out);
-    for (auto anno: annotations) {
-        if (datasetType == DatasetFormat::KITTI) {
+    for (auto anno: m_annotations) {
+        if (m_datasetType == DatasetFormat::KITTI) {
             auto box = anno->getBoxLabel();
             output << box.type << " "; // Class object
             output << 0.0 << " "; // Truncated
@@ -392,10 +395,10 @@ void Annotations::saveAnnotations(string filename)
 
 vector<Annotation *> &Annotations::getAnnotations()
 {
-    return annotations;
+    return m_annotations;
 }
 
-Annotations::Annotations() : datasetType(DatasetFormat::KITTI)
+Annotations::Annotations() : m_datasetType(DatasetFormat::KITTI)
 {
 }
 

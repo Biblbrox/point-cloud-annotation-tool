@@ -18,7 +18,7 @@ public:
     void setAnno(Annotation *value);
 
 private:
-    Annotation* anno;
+    Annotation* m_anno;
 };
 
 
@@ -35,7 +35,7 @@ public:
     void setAnno(Annotation *value);
 
 private:
-    Annotation* anno;
+    Annotation* m_anno;
 };
 
 #endif

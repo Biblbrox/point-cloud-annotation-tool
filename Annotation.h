@@ -206,25 +206,25 @@ protected:
 
 
 private:
-    string type;
-    vtkSmartPointer<vtkAnnotationBoxSource> source;
-    vtkSmartPointer<vtkActor> actor;
-    vtkSmartPointer<vtkPolyDataMapper> mapper;
-    vtkSmartPointer<vtkTransform> transform;
+    string m_type;
+    vtkSmartPointer<vtkAnnotationBoxSource> m_source;
+    vtkSmartPointer<vtkActor> m_actor;
+    vtkSmartPointer<vtkPolyDataMapper> m_mapper;
+    vtkSmartPointer<vtkTransform> m_transform;
 
-    vtkSmartPointer<vtkBoxWidgetRestricted> boxWidget;
-    vtkSmartPointer<vtkBoxWidgetCallback0> boxWidgetCallback0;
-    vtkSmartPointer<vtkBoxWidgetCallback1> boxWidgetCallback1;
+    vtkSmartPointer<vtkBoxWidgetRestricted> m_boxWidget;
+    vtkSmartPointer<vtkBoxWidgetCallback0> m_boxWidgetCallback0;
+    vtkSmartPointer<vtkBoxWidgetCallback1> m_boxWidgetCallback1;
 
-    vector<double *> anchorPoints;
-    double center[3];
+    vector<double *> m_anchorPoints;
+    double m_center[3];
 
     // Position of sensor
-    double cameraPos[3];
+    double m_cameraPos[3];
 
     // NOTE not used
-    bool visible;
-    bool lock;
+    bool m_visible;
+    bool m_lock;
 
 
 public:
@@ -262,7 +262,7 @@ private:
     /**
      * @brief types all annotation type here
      */
-    static vector<string> *types;
+    static vector<string> *m_types;
 
 };
 
@@ -305,8 +305,8 @@ protected:
     /**
      * @brief keep all annotation from current cloud
      */
-    vector<Annotation *> annotations;
-    DatasetFormat datasetType;
+    vector<Annotation *> m_annotations;
+    DatasetFormat m_datasetType;
 };
 
 
