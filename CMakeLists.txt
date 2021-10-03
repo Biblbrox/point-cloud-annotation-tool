@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
 project(point_cloud_annotation_tool)
 
+set(CMAKE_CXX_COMPILER_VERSION 11)
 
 # Hide the console window in visual studio projects - Release
 if(MSVC)
@@ -50,7 +51,7 @@ set(project_source
     # visualizer.h
     visualizer.cpp
     # Annotaion.h
-    Annotaion.cpp
+        Annotation.cpp
     # vtkBoxWidgetCallback.h
     vtkBoxWidgetCallback.cpp
     # vtkBoxWidgetRestricted.h

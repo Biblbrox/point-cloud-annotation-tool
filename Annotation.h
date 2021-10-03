@@ -3,57 +3,118 @@
 
 #include <common.h>
 #include <vtkSmartPointer.h>
+
 using namespace std;
+
+enum class DatasetFormat
+{
+    STANDARD,
+    KITTI
+};
+
 
 struct BoxLabel
 {
-    BoxLabel(){
-        type="unknown";
-        this->detail.center_x=this->detail.center_y=this->detail.center_z=0;
-        this->detail.yaw=2;
-        this->detail.length=this->detail.width=this->detail.height=1;
+    BoxLabel()
+    {
+        type = "unknown";
+        this->detail.center_x = this->detail.center_y = this->detail.center_z = 0;
+        this->detail.yaw = 2;
+        this->detail.length = this->detail.width = this->detail.height = 1;
     }
-    BoxLabel(const double p1[3],const double p2[3],string type_="unknown"){
-        type=type_;
-        this->detail.center_x=(p1[0]+p2[0])/2;
-        this->detail.center_y=(p1[1]+p2[1])/2;
-        this->detail.center_z=(p1[2]+p2[2])/2;
-        this->detail.yaw=0;
-        this->detail.length=p2[0]-p1[0];
-        this->detail.width=p2[1]-p1[1];
-        this->detail.height=p2[2]-p1[2];
+
+    BoxLabel(const double p1[3], const double p2[3], string type_ = "unknown")
+    {
+        type = type_;
+        this->detail.center_x = (p1[0] + p2[0]) / 2;
+        this->detail.center_y = (p1[1] + p2[1]) / 2;
+        this->detail.center_z = (p1[2] + p2[2]) / 2;
+        this->detail.yaw = 0;
+        this->detail.length = p2[0] - p1[0];
+        this->detail.width = p2[1] - p1[1];
+        this->detail.height = p2[2] - p1[2];
     }
+
     string type;
-    union{
+    double cameraPosX;
+    double cameraPosY;
+    double cameraPosZ;
+    union
+    {
         double data[7];
-        struct{
-            double center_x;
-            double center_y;
-            double center_z;
+        struct
+        {
+            /**
+             * Float from 0 (non-truncated) to 1 (truncated), where
+             * truncated refers to the object leaving image boundaries
+             */
+            double truncated;
+            /**
+             * Integer (0,1,2,3) indicating occlusion state:
+             * 0 = fully visible, 1 = partly occluded
+             * 2 = largely occluded, 3 = unknown
+             */
+            double occluded;
+
+            /**
+             * Observation angle of object, ranging [-pi..pi]
+             */
+            double alpha;
+
+            /**
+             * 2D bounding box of object in the image (0-based index):
+             * contains left, top, right, bottom pixel coordinates
+             */
+            double left;
+            double top;
+            double right;
+            double bottom;
+
+            /**
+             * 3D object dimensions: height, width, length (in meters)
+             */
             double length;
             double width;
             double height;
+
+            /**
+             * 3D object location x,y,z in camera coordinates (in meters)
+             */
+            double center_x;
+            double center_y;
+            double center_z;
+
+            /**
+             * Rotation ry around Y-axis in camera coordinates [-pi..pi]
+             */
             double yaw;
         } detail;
     };
 
-    string toString(){
-        char buffer [200];
-        sprintf(buffer,"%s %f %f %f %f %f %f %f",
-                type.c_str(),data[0],data[1],data[2],data[3],data[4],data[5],data[6]);
+    string toString()
+    {
+        char buffer[200];
+        sprintf(buffer, "%s %f %f %f %f %f %f %f",
+                type.c_str(), data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
         return std::string(buffer);;
     }
 };
 
 
 class vtkBoxWidgetCallback0;
+
 class vtkBoxWidgetCallback1;
+
 class vtkAnnotationBoxSource;
+
 class vtkBoxWidgetRestricted;
 
 class vtkTransform;
+
 class vtkRenderWindowInteractor;
+
 class vtkActor;
+
 class vtkPolyDataMapper;
 
 class Annotation
@@ -65,7 +126,7 @@ public:
      * @param visible_
      * @param lock_
      */
-    Annotation(const BoxLabel &label,bool visible_=true,bool lock_=false);
+    Annotation(const BoxLabel &label, bool visible_ = true, bool lock_ = false);
 
     /**
      * @brief Annotation construct from part of cloud points
@@ -73,7 +134,7 @@ public:
      * @param slice
      * @param type_
      */
-    Annotation(const PointCloudTPtr cloud, vector<int> & slice,string type_);
+    Annotation(const PointCloudTPtr cloud, vector<int> &slice, string type_);
 
     ~Annotation();
 
@@ -93,7 +154,7 @@ public:
      * @brief enter picked state, show boxwidget which allow to adjust annotation
      * @param interactor
      */
-    void picked(vtkRenderWindowInteractor* interactor);
+    void picked(vtkRenderWindowInteractor *interactor);
 
     /**
      * @brief disable boxWidget
@@ -111,7 +172,9 @@ public:
      * @param value
      */
     void setType(const string value);
+
     vtkSmartPointer<vtkActor> getActor() const;
+
     string getType() const;
 
 
@@ -124,7 +187,7 @@ protected:
      * if color_index>=0,refer to @ref pcl::GlasbeyLUT
      * otherwise use color already mapped by type
      */
-    void colorAnnotation(int color_index=-1);
+    void colorAnnotation(int color_index = -1);
 
     /**
      * @brief copy selected points as anchor to current annotation
@@ -139,9 +202,7 @@ protected:
      * @param scs ["scale", "center shift"]
      * @return scale
      */
-    double computeScaleAndCenterShift(double o[3],double scs[2]);
-
-
+    double computeScaleAndCenterShift(double o[3], double scs[2]);
 
 
 private:
@@ -155,13 +216,15 @@ private:
     vtkSmartPointer<vtkBoxWidgetCallback0> boxWidgetCallback0;
     vtkSmartPointer<vtkBoxWidgetCallback1> boxWidgetCallback1;
 
-    vector<double*> anchorPoints;
+    vector<double *> anchorPoints;
     double center[3];
+
+    // Position of sensor
+    double cameraPos[3];
 
     // NOTE not used
     bool visible;
     bool lock;
-
 
 
 public:
@@ -169,7 +232,7 @@ public:
      * @brief get types vector pointer
      * @return
      */
-    static vector<string>* getTypes();
+    static vector<string> *getTypes();
 
     /**
      * @brief getTypeIndex  auto add to vector map if has not
@@ -192,19 +255,19 @@ public:
      * @param p1 min [x,y,z]
      * @param p2 max [x,y,z]
      */
-    static void computeOBB(const  PointCloudTPtr cloud, vector<int>& slice, double p1[3], double p2[3]);
+    static void
+    computeOBB(const PointCloudTPtr cloud, vector<int> &slice, double p1[3], double p2[3]);
 
 private:
     /**
      * @brief types all annotation type here
      */
-    static vector<string>* types;
+    static vector<string> *types;
 
 };
 
 
-
-class Annotaions
+class Annotations
 {
 public:
     /**
@@ -212,11 +275,16 @@ public:
      * @param actor
      * @return
      */
-    Annotation* getAnnotation(vtkActor* actor);
+    Annotation *getAnnotation(vtkActor *actor);
 
-    void push_back(Annotation* anno);
-    void remove(Annotation* anno);
+    explicit Annotations();
+
+    void push_back(Annotation *anno);
+
+    void remove(Annotation *anno);
+
     void clear();
+
     int getSize();
 
     /**
@@ -231,16 +299,15 @@ public:
      */
     void saveAnnotations(string filename);
 
-    vector<Annotation *>& getAnnotations();
+    vector<Annotation *> &getAnnotations();
 
 protected:
     /**
      * @brief keep all annotation from current cloud
      */
-    vector<Annotation*> annotations;
-
+    vector<Annotation *> annotations;
+    DatasetFormat datasetType;
 };
-
 
 
 #endif //Annotaions_H

@@ -4,7 +4,7 @@
 #include "common.h"
 #include <QMainWindow>
 #include <pcl/visualization/PointCloudColorHandlerLUT.h>
-#include <Annotaion.h>
+#include <Annotation.h>
 
 namespace Ui {
 class MainWindow;
@@ -30,6 +30,8 @@ protected:
     PCLViewerPtr viewer;
     string pointcloudFileName;
     string annotationFileName;
+    string calMatrixFileName;
+    Eigen::MatrixXd calMatrix;
     /**
      * @brief the loaded cloud
      */
@@ -41,7 +43,7 @@ protected:
     PointCloudColorHandlerLUT<PointT> colorHandler;
     vector<int> last_selected_slice;
     // manage annotations
-    boost::shared_ptr<Annotaions> annoManager;
+    boost::shared_ptr<Annotations> annoManager;
 
     /**
      * @brief show loaded cloud and annotations
@@ -85,6 +87,7 @@ private:
     void showAnnotation(const Annotation* anno);
     void removeAnnotation();
     void removeAnnotation(Annotation* anno);
+    Eigen::MatrixXd loadMatFromFile(const std::string& fileName) const;
 
     // axes
     vtkSmartPointer<vtkOrientationMarkerWidget> axesWidget;
