@@ -111,7 +111,7 @@ void Visualizer::initialize()
 
     //init annotation
     m_annoManager.reset(new Annotations());
-    m_currPickedAnnotation = NULL;
+    m_currPickedAnnotation = nullptr;
 
     //axes
     vtkSmartPointer<vtkAxesActor> axes =
@@ -126,7 +126,7 @@ void Visualizer::initialize()
 
     // init cloud
     m_cloud.reset(new PointCloudT);
-    m_cloudLabel = NULL;
+    m_cloudLabel = nullptr;
 }
 
 void Visualizer::refresh()
@@ -164,23 +164,21 @@ void Visualizer::pickAnnotation(double x, double y)
 
     if (m_currPickedAnnotation) {
         m_currPickedAnnotation->unpicked();
-        m_currPickedAnnotation = NULL;
+        m_currPickedAnnotation = nullptr;
     }
     // get the correspond annotation
     m_currPickedAnnotation = m_annoManager->getAnnotation(pickedActor);
-    if (m_currPickedAnnotation) {
+    if (m_currPickedAnnotation)
         m_currPickedAnnotation->picked(m_viewer->getRenderWindowInteractor());
-    }
-
 }
 
 void Visualizer::highlightPoint(std::vector<int> &slice)
 {
-    if (slice.size() < 1) return;
+    if (slice.empty())
+        return;
 
-    for (std::vector<int>::iterator it = slice.begin(); it != slice.end(); it++) {
-        m_cloudLabel[*it] = SELECTED_POINT;
-    }
+    for (int& it : slice)
+        m_cloudLabel[it] = SELECTED_POINT;
 }
 
 
@@ -189,7 +187,7 @@ void Visualizer::defaultColorPoint(std::vector<int> &slice)
     if (slice.empty())
         memset(m_cloudLabel, DEFAULT_POINT, m_cloud->size() * sizeof(int));
 
-    for (int &it : slice)
+    for (int& it : slice)
         m_cloudLabel[it] = DEFAULT_POINT;
 }
 
@@ -198,7 +196,7 @@ void Visualizer::groundColorPoint(std::vector<int> &slice)
     if (slice.empty())
         return;
 
-    for (int &it : slice)
+    for (int& it : slice)
         m_cloudLabel[it] = GROUND_POINT;
 }
 
@@ -206,7 +204,7 @@ void Visualizer::groundColorPoint(std::vector<int> &slice)
 void Visualizer::createAnnotationFromSelectPoints(string type)
 {
     if (m_last_selected_slice.size() > 3) {
-        Annotation *anno = new Annotation(m_cloud, m_last_selected_slice, type);
+        Annotation *anno = new Annotation(m_cloud, m_last_selected_slice, type, m_img);
         m_annoManager->push_back(anno);
         showAnnotation(anno);
         m_ui->qvtkWidget->update();
@@ -224,9 +222,8 @@ void Visualizer::typeButtonClickedProcess(string type)
         return;
     }
 
-    if (m_last_selected_slice.size() > 3) {
+    if (m_last_selected_slice.size() > 3)
         createAnnotationFromSelectPoints(type);
-    }
 }
 
 void Visualizer::updateCloud()
@@ -273,16 +270,14 @@ void Visualizer::AreaPickingEventProcess(const pcl::visualization::AreaPickingEv
 
     // remove ground points
     vector<int> r;
-    for (auto x:new_selected_slice) {
-        if (m_cloudLabel[x] != GROUND_POINT) {
+    for (auto x:new_selected_slice)
+        if (m_cloudLabel[x] != GROUND_POINT)
             r.push_back(x);
-        }
-    }
+
     new_selected_slice = r;
 
-    if (!m_last_selected_slice.empty()) {
+    if (!m_last_selected_slice.empty())
         defaultColorPoint(m_last_selected_slice);
-    }
 
     if (s && a) { // intersection
         m_last_selected_slice = intersectionVector(m_last_selected_slice, new_selected_slice);
@@ -293,7 +288,6 @@ void Visualizer::AreaPickingEventProcess(const pcl::visualization::AreaPickingEv
     } else { // new
         m_last_selected_slice = new_selected_slice;
     }
-
 
     highlightPoint(m_last_selected_slice);
     updateCloud();
@@ -313,16 +307,14 @@ void Visualizer::KeyboardEventProcess(const KeyboardEvent &event)
     std::cout << event.getKeySym() << std::endl;
 
     // delete annotation
-    if (event.getKeySym() == "Delete" && m_currPickedAnnotation) {
+    if (event.getKeySym() == "Delete" && m_currPickedAnnotation)
         removeAnnotation(m_currPickedAnnotation);
-    }
 }
 
 void Visualizer::showAnnotation()
 {
-    for (auto anno:m_annoManager->getAnnotations()) {
+    for (auto anno:m_annoManager->getAnnotations())
         showAnnotation(anno);
-    }
 }
 
 void Visualizer::threshold()
@@ -332,11 +324,10 @@ void Visualizer::threshold()
     threhold_ = m_ui->threshold_lineEdit->text().toDouble();
 
     vector<int> slice;
-    for (int i = 0; i < m_cloud->size(); i++) {
-        if (m_cloud->points[i].z < threhold_) {
+    for (int i = 0; i < m_cloud->size(); i++)
+        if (m_cloud->points[i].z < threhold_)
             slice.push_back(i);
-        }
-    }
+
     memset(m_cloudLabel, DEFAULT_POINT, m_cloud->size() * sizeof(int));
     groundColorPoint(slice);
     updateCloud();
@@ -407,7 +398,13 @@ void Visualizer::openFile()
     m_calMatrixFileName = QFileDialog::getOpenFileName(this, tr("Open calibration matrix file"),
                                                      homeDir,
                                                      tr("Txt Files (*.txt)")).toStdString();
-    if (m_pointcloudFileName.empty()) return;
+
+    m_imgFileName = QFileDialog::getOpenFileName(this, tr("Open image file name"),
+                                                 homeDir, // TODO: fix hardcoded formats
+                                                 tr("Image Files (*.png *.jpg *.jpeg)")).toStdString();
+
+    if (m_pointcloudFileName.empty())
+        return;
 
     clear();
     QFileInfo file(QString::fromStdString(m_pointcloudFileName));
@@ -422,13 +419,13 @@ void Visualizer::openFile()
     std::cout << m_pointcloudFileName << "cloud point loaded" << endl;
     std::cout << "cloud point number: " << m_cloud->width * m_cloud->height << endl;
 
-    m_annotationFileName = m_pointcloudFileName + ".txt";
-    if (QFile::exists(QString::fromStdString(m_annotationFileName))) {
-        m_annoManager->loadAnnotations(m_annotationFileName);
-    }
-
     // Load calibration matrix
     m_calMatrix = loadMatFromFile(m_calMatrixFileName);
+    m_img = cv::imread(m_imgFileName);
+
+    m_annotationFileName = m_pointcloudFileName + ".txt";
+    if (QFile::exists(QString::fromStdString(m_annotationFileName)))
+        m_annoManager->loadAnnotations(m_annotationFileName);
 
     refresh();
 }
@@ -439,12 +436,12 @@ void Visualizer::clear()
     m_viewer->removeAllPointClouds();
     m_annoManager->clear();
 
-    m_currPickedAnnotation = NULL;
+    m_currPickedAnnotation = nullptr;
     m_last_selected_slice.clear();
 
     if (m_cloudLabel) {
         delete[] m_cloudLabel;
-        m_cloudLabel = NULL;
+        m_cloudLabel = nullptr;
     }
 }
 
@@ -480,7 +477,7 @@ void Visualizer::showAnnotation(const Annotation *anno)
 
 void Visualizer::removeAnnotation()
 {
-    for (auto anno:m_annoManager->getAnnotations())
+    for (auto anno: m_annoManager->getAnnotations())
         removeAnnotation(anno);
 }
 
@@ -488,7 +485,7 @@ void Visualizer::removeAnnotation(Annotation *anno)
 {
     if (m_currPickedAnnotation) {
         m_currPickedAnnotation->unpicked();
-        m_currPickedAnnotation = NULL;
+        m_currPickedAnnotation = nullptr;
     }
     m_viewer->removeActorFromRenderer(anno->getActor());
 }

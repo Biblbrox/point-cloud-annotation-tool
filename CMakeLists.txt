@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
 project(point_cloud_annotation_tool)
 
-set(CMAKE_CXX_COMPILER_VERSION 11)
+set(CMAKE_CXX_COMPILER_VERSION 17)
+
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/libs)
 
 # Hide the console window in visual studio projects - Release
 if(MSVC)
@@ -27,6 +29,10 @@ find_package(VTK COMPONENTS
         vtkGUISupportQt
         vtkRenderingOpenGL2
         REQUIRED)
+
+find_package(GLM REQUIRED)
+find_package(OpenCV REQUIRED)
+
 INCLUDE(${VTK_USE_FILE}) # include UseVTK.cmake
 message(STATUS "VTK_LIBRARIES: ${VTK_LIBRARIES}")
 
@@ -69,7 +75,9 @@ set(project_source
 
 
 add_executable(${PROJECT_NAME} ${project_source} ui_mainwindow.h)
-target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES} Qt5::Widgets vtkGUISupportQt)
+target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES} Qt5::Widgets vtkGUISupportQt
+        ${OpenCV_LIBS})
+target_include_directories(${PROJECT_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS})
 
 option(BUILD_TEST "build test exampes" ON)
 if (BUILD_TEST)

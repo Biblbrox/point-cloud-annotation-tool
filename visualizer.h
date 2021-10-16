@@ -31,7 +31,9 @@ protected:
     string m_pointcloudFileName;
     string m_annotationFileName;
     string m_calMatrixFileName;
+    string m_imgFileName;
     Eigen::MatrixXd m_calMatrix;
+    cv::Mat m_img;
     /**
      * @brief the loaded cloud
      */

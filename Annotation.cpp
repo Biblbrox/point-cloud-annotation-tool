@@ -2,15 +2,16 @@
 #include <vtkAnnotationBoxSource.h>
 #include <vtkBoxWidgetRestricted.h>
 #include <vtkBoxWidgetCallback.h>
+#include <vtkRect.h>
+#include <glm/vec3.hpp>
+#include <opencv4/opencv2/opencv.hpp>
+#include <opencv4/opencv2/tracking.hpp>
 
 using namespace std;
 
 Annotation::Annotation(const BoxLabel &label, bool visible_, bool lock_)
-        : m_visible(visible_), m_lock(lock_)
+        : m_visible(visible_), m_lock(lock_), m_type(label.type)
 {
-    //m_type
-    m_type = label.type;
-
     // init variable
     initial();
 
@@ -25,7 +26,8 @@ Annotation::Annotation(const BoxLabel &label, bool visible_, bool lock_)
     applyTransform(cubeTransform);
 }
 
-Annotation::Annotation(const PointCloudTPtr cloud, vector<int> &slice, string type_)
+Annotation::Annotation(const PointCloudTPtr cloud, vector<int> &slice, string type_, cv::Mat img)
+        : m_img(std::move(img))
 {
     double p1[3];
     double p2[3];
@@ -35,6 +37,7 @@ Annotation::Annotation(const PointCloudTPtr cloud, vector<int> &slice, string ty
     setAnchorPoint(cloud, slice);
 
     m_type = type_;
+    m_imgBbox = cv::selectROI(m_img);
 
     // init variable
     initial();
@@ -76,6 +79,55 @@ BoxLabel Annotation::getBoxLabel()
     memcpy(label.data, pos, 3 * sizeof(double));
     memcpy(label.data + 3, scale, 3 * sizeof(double));
     label.detail.yaw = orientation[2] / 180 * vtkMath::Pi();
+
+    return label;
+}
+
+BoxLabel Annotation::getBoxLabelKitti()
+{
+    BoxLabel label;
+    label.type = m_type;
+
+    double pos[3];
+    double scale[3];
+    double orientation[3];
+    m_transform->GetPosition(pos);
+    m_transform->GetScale(scale);
+    m_transform->GetOrientation(orientation);
+
+    // Float from 0 (non-truncated) to 1 (truncated), where
+    // truncated refers to the object leaving image boundaries
+    label.detail.truncated = 0.0;
+
+    // Integer (0,1,2,3) indicating occlusion state:
+    // 0 = fully visible, 1 = partly occluded
+    // 2 = largely occluded, 3 = unknown
+    label.detail.occluded = 0;
+
+    // Observation angle of object, ranging [-pi..pi]
+//    glm::vec3 objectPos{pos[0], pos[1], pos[2]};
+//    glm::vec3 vcamObj = m_cameraPos - objectPos;
+//    glm::vec3 vobjDir =
+    label.detail.alpha = 0.0;
+
+    // 2D bounding box of object in the image (0-based index):
+    // contains left, top, right, bottom pixel coordinates
+    label.detail.left =   m_imgBbox.x;
+    label.detail.top =    m_imgBbox.y;
+    label.detail.right =  m_imgBbox.x + m_imgBbox.width;
+    label.detail.bottom = m_imgBbox.y + m_imgBbox.height;
+
+    // Height, width and length of object
+    label.data[3] = scale[2];
+    label.data[4] = scale[1];
+    label.data[5] = scale[0];
+
+    // Position of center
+    memcpy(label.data, pos, 3 * sizeof(double));
+
+    // Rotation ry around Y-axis in camera coordinates [-pi..pi]
+    label.detail.yaw = orientation[2] / 180 * vtkMath::Pi();
+
     return label;
 }
 
@@ -312,14 +364,13 @@ Annotation::computeOBB(const PointCloudTPtr cloud, vector<int> &slice, double p1
 // static variable
 vector<string> *Annotation::m_types = new vector<string>();
 
-
-Annotation *Annotations::getAnnotation(vtkActor *actor)
+Annotation* Annotations::getAnnotation(vtkActor *actor)
 {
     for (auto *anno : m_annotations)
         if (anno->getActor() == actor)
             return anno;
 
-    return 0;
+    return nullptr;
 }
 
 void Annotations::push_back(Annotation *anno)
@@ -341,7 +392,7 @@ void Annotations::clear()
     m_annotations.clear();
 }
 
-int Annotations::getSize()
+size_t Annotations::getSize()
 {
     return m_annotations.size();
 }
@@ -374,22 +425,12 @@ void Annotations::saveAnnotations(string filename)
         return;
 
     std::ofstream output(filename.c_str(), std::ios_base::out);
-    for (auto anno: m_annotations) {
-        if (m_datasetType == DatasetFormat::KITTI) {
-            auto box = anno->getBoxLabel();
-            output << box.type << " "; // Class object
-            output << 0.0 << " "; // Truncated
-            output << 0 << " "; // Occluded
-            output << 123 << " "; // Observation angle of object TODO: fix this
-            output << 0 << " " << 0 << " "; // 2D bounding box TODO: fix this
-            output << box.data[5] << " " << box.data[4] << " " << box.data[3] << " "; // height, width, length
-            output << box.data[0] - box.cameraPosX << " " << box.data[1] - box.cameraPosY << " "
-                   << box.data[2] - box.cameraPosZ << " "; // Position in camera coords
-            output << box.detail.yaw << " "; // Rotation about vertical axis(yaw)
-        } else {
-            output << anno->getBoxLabel().toString() << std::endl;
-        }
-    }
+    for (auto anno: m_annotations)
+        if (m_datasetType == DatasetFormat::KITTI)
+            output << anno->getBoxLabelKitti().toString(m_datasetType) << "\n";
+        else
+            output << anno->getBoxLabel().toString(m_datasetType) << std::endl;
+
     output.close();
 }
 

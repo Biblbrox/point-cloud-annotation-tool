@@ -3,6 +3,8 @@
 
 #include <common.h>
 #include <vtkSmartPointer.h>
+#include <glm/vec3.hpp>
+#include <opencv4/opencv2/opencv.hpp>
 
 using namespace std;
 
@@ -54,7 +56,7 @@ struct BoxLabel
              * 0 = fully visible, 1 = partly occluded
              * 2 = largely occluded, 3 = unknown
              */
-            double occluded;
+            int occluded;
 
             /**
              * Observation angle of object, ranging [-pi..pi]
@@ -91,12 +93,20 @@ struct BoxLabel
         } detail;
     };
 
-    string toString()
+    string toString(DatasetFormat fmt)
     {
-        char buffer[200];
-        sprintf(buffer, "%s %f %f %f %f %f %f %f",
+        char buffer[300];
+        if (fmt == DatasetFormat::KITTI) {
+            sprintf(buffer, "%s %f %i %f %f %f %f %f %f %f %f %f %f %f",
+                    type.c_str(), detail.truncated, detail.occluded, detail.alpha,
+                    detail.left, detail.top, detail.right, detail.bottom,
+                    data[3], data[4], data[5], data[0], data[1], data[2]);
+        } else {
+            sprintf(buffer, "%s %f %f %f %f %f %f %f",
                 type.c_str(), data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
-        return std::string(buffer);;
+        }
+
+        return buffer;
     }
 };
 
@@ -117,6 +127,8 @@ class vtkActor;
 
 class vtkPolyDataMapper;
 
+class vtkRectd;
+
 class Annotation
 {
 public:
@@ -134,7 +146,7 @@ public:
      * @param slice
      * @param type_
      */
-    Annotation(const PointCloudTPtr cloud, vector<int> &slice, string type_);
+    Annotation(const PointCloudTPtr cloud, vector<int> &slice, string type_, cv::Mat img);
 
     ~Annotation();
 
@@ -143,6 +155,12 @@ public:
      * @return
      */
     BoxLabel getBoxLabel();
+
+    /**
+     * @brief getBoxLabel get boxLabel from annotaion tranformation
+     * @return
+     */
+    BoxLabel getBoxLabelKitti();
 
     /**
      * @brief apply transform to annotation
@@ -176,7 +194,6 @@ public:
     vtkSmartPointer<vtkActor> getActor() const;
 
     string getType() const;
-
 
 protected:
     void initial();
@@ -218,14 +235,22 @@ private:
 
     vector<double *> m_anchorPoints;
     double m_center[3];
+    cv::Rect m_imgBbox;
 
     // Position of sensor
-    double m_cameraPos[3];
+    glm::vec3 m_cameraPos[3];
+
+    cv::Mat m_img;
 
     // NOTE not used
     bool m_visible;
     bool m_lock;
 
+    /**
+     * Input 2D bounding box from image
+     * @return vtkRectd bounding box
+     */
+    cv::Rect input2DBbox() const;
 
 public:
     /**
@@ -285,7 +310,7 @@ public:
 
     void clear();
 
-    int getSize();
+    size_t getSize();
 
     /**
      * @brief load annotations from file
