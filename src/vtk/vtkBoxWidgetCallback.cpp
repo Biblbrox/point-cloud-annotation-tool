@@ -1,4 +1,4 @@
-#include <vtkBoxWidgetCallback.h>
+#include <vtk/vtkBoxWidgetCallback.h>
 #include <Annotation.h>
 #include <vtkBoxWidget.h>
 #include <vtkTransform.h>

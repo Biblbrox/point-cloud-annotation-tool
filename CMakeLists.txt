@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 project(point_cloud_annotation_tool)
 
 set(CMAKE_CXX_COMPILER_VERSION 17)
+set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/libs)
 
@@ -51,19 +52,23 @@ set(CMAKE_AUTORCC ON) # Resource files
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 QT5_WRAP_UI(ui_mainwindow.h mainwindow.ui)
 
-set(project_source 
+FILE(GLOB_RECURSE CPP RELATIVE ${PROJECT_SOURCE_DIR} "src/*.cpp")
+FILE(GLOB_RECURSE HPP RELATIVE ${PROJECT_SOURCE_DIR} "include/*.hpp" "include/*.h")
+
+set(project_source
+        ${HPP} ${CPP}
     # common.h
-    main.cpp
+    #main.cpp
     # visualizer.h
-    visualizer.cpp
+    #visualizer.cpp
     # Annotaion.h
-        Annotation.cpp
+    #    Annotation.cpp
     # vtkBoxWidgetCallback.h
-    vtkBoxWidgetCallback.cpp
+    #vtkBoxWidgetCallback.cpp
     # vtkBoxWidgetRestricted.h
-    vtkBoxWidgetRestricted.cpp
+    #vtkBoxWidgetRestricted.cpp
     # vtkAnnotationBoxSource.h
-    vtkAnnotationBoxSource.cpp
+    #vtkAnnotationBoxSource.cpp
     # pcl/visualization/pcl_visualizer_extented.h
     pcl/visualization/pcl_visualizer_extented.cpp
     # pcl/visualization/MyCloudLUT.h
@@ -77,7 +82,7 @@ set(project_source
 add_executable(${PROJECT_NAME} ${project_source} ui_mainwindow.h)
 target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES} Qt5::Widgets vtkGUISupportQt
         ${OpenCV_LIBS})
-target_include_directories(${PROJECT_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS} include)
 
 option(BUILD_TEST "build test exampes" ON)
 if (BUILD_TEST)

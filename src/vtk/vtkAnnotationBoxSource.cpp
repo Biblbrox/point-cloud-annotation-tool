@@ -1,4 +1,4 @@
-#include "vtkAnnotationBoxSource.h"
+#include "vtk/vtkAnnotationBoxSource.h"
 #include "vtkCellArray.h"
 #include "vtkFloatArray.h"
 #include "vtkInformation.h"

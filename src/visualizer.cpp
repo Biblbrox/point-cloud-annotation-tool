@@ -399,9 +399,9 @@ void Visualizer::openFile()
                                                      homeDir,
                                                      tr("Txt Files (*.txt)")).toStdString();
 
+    const char* imgTypes = "Image Files (*.png *bmp *.jpg *.jpeg)";
     m_imgFileName = QFileDialog::getOpenFileName(this, tr("Open image file name"),
-                                                 homeDir, // TODO: fix hardcoded formats
-                                                 tr("Image Files (*.png *.jpg *.jpeg)")).toStdString();
+                                                 homeDir, tr(imgTypes)).toStdString();
 
     if (m_pointcloudFileName.empty())
         return;

@@ -1,11 +1,14 @@
+#include <string_view>
 #include <Annotation.h>
-#include <vtkAnnotationBoxSource.h>
-#include <vtkBoxWidgetRestricted.h>
-#include <vtkBoxWidgetCallback.h>
+#include <vtk/vtkAnnotationBoxSource.h>
+#include <vtk/vtkBoxWidgetRestricted.h>
+#include <vtk/vtkBoxWidgetCallback.h>
 #include <vtkRect.h>
 #include <glm/vec3.hpp>
 #include <opencv4/opencv2/opencv.hpp>
 #include <opencv4/opencv2/tracking.hpp>
+
+#include "cvtools.hpp"
 
 using namespace std;
 
@@ -37,7 +40,20 @@ Annotation::Annotation(const PointCloudTPtr cloud, vector<int> &slice, string ty
     setAnchorPoint(cloud, slice);
 
     m_type = type_;
-    m_imgBbox = cv::selectROI(m_img);
+
+    // Select bbox from image
+    std::string roiWindow = "Select ROI";
+    cv::Mat borderImg = cvtools::addBorder(m_img, 40);
+    m_imgBbox = cv::selectROI(roiWindow, borderImg);
+    m_imgBbox.x -= 40;
+    m_imgBbox.y -= 40;
+    std::cout << "Selected roi: \n";
+    std::cout << "X: " << m_imgBbox.x << ", ";
+    std::cout << "Y: " << m_imgBbox.y << "\n";
+    cv::destroyWindow(roiWindow);
+
+    float truncated = cvtools::calcTruncated(m_img, m_imgBbox, cv::Point(0, 0));
+    std::cout << "Truncated: " << truncated << "\n";
 
     // init variable
     initial();
@@ -97,7 +113,8 @@ BoxLabel Annotation::getBoxLabelKitti()
 
     // Float from 0 (non-truncated) to 1 (truncated), where
     // truncated refers to the object leaving image boundaries
-    label.detail.truncated = 0.0;
+    // TODO: fix hardcoded border
+    label.detail.truncated = cvtools::calcTruncated(m_img, m_imgBbox, cv::Point(0, 0));
 
     // Integer (0,1,2,3) indicating occlusion state:
     // 0 = fully visible, 1 = partly occluded
@@ -112,9 +129,9 @@ BoxLabel Annotation::getBoxLabelKitti()
 
     // 2D bounding box of object in the image (0-based index):
     // contains left, top, right, bottom pixel coordinates
-    label.detail.left =   m_imgBbox.x;
-    label.detail.top =    m_imgBbox.y;
-    label.detail.right =  m_imgBbox.x + m_imgBbox.width;
+    label.detail.left   = m_imgBbox.x;
+    label.detail.top    = m_imgBbox.y;
+    label.detail.right  = m_imgBbox.x + m_imgBbox.width;
     label.detail.bottom = m_imgBbox.y + m_imgBbox.height;
 
     // Height, width and length of object
@@ -221,7 +238,7 @@ string Annotation::getType() const
     return m_type;
 }
 
-void Annotation::setType(const string value)
+void Annotation::setType(std::string_view value)
 {
     if (value != m_type) {
         m_type = value;
@@ -265,14 +282,12 @@ void Annotation::colorAnnotation(int color_index)
             vtkSmartPointer<vtkFloatArray>::New();
 
     //line color
-    for (int i = 0; i < 12; i++) {
+    for (int i = 0; i < 12; i++)
         cellData->InsertNextValue(1);
-    }
 
     //face color
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++)
         cellData->InsertNextValue(0);
-    }
 
     // plusX face
     cellData->InsertValue(12, 1);
@@ -323,7 +338,7 @@ vector<string> *Annotation::getTypes()
     return m_types;
 }
 
-int Annotation::getTypeIndex(string type_)
+size_t Annotation::getTypeIndex(std::string type_)
 {
     for (int i = 0; i < m_types->size(); i++)
         if (m_types->at(i) == type_) return i;

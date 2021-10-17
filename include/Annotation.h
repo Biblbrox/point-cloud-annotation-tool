@@ -1,6 +1,7 @@
 #ifndef Annotaions_H
 #define Annotaions_H
 
+#include <string_view>
 #include <common.h>
 #include <vtkSmartPointer.h>
 #include <glm/vec3.hpp>
@@ -189,7 +190,7 @@ public:
      * @brief change the type of annotation, and color too
      * @param value
      */
-    void setType(const string value);
+    void setType(std::string_view value);
 
     vtkSmartPointer<vtkActor> getActor() const;
 
@@ -264,7 +265,7 @@ public:
      * @param type_
      * @return
      */
-    static int getTypeIndex(string type_);
+    static size_t getTypeIndex(string type_);
 
     /**
      * @brief getColor map type to color in pcl::GlasbeyLUT
