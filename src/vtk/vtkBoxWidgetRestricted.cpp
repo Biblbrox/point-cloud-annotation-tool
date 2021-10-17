@@ -22,9 +22,8 @@ void vtkBoxWidgetRestricted::Rotate(int X, int Y, double *p1, double *p2, double
     double m[3];
     vtkMath::Cross(z,vpn,m);
     if ( vtkMath::Normalize(m) == 0.0 ||  vtkMath::Normalize(v) == 0.0)
-    {
         return;
-    }
+
     // alpha is the angle between the motion vector and vector m
     double cos_alpha=vtkMath::Dot(m,v);
 //    std::cout<<cos_alpha<<endl;
@@ -43,9 +42,7 @@ void vtkBoxWidgetRestricted::Rotate(int X, int Y, double *p1, double *p2, double
     this->Transform->TransformPoints(this->Points,newPts);
 
     for (i=0; i<8; i++, pts+=3)
-    {
         this->Points->SetPoint(i, newPts->GetPoint(i));
-    }
 
     newPts->Delete();
     this->PositionHandles();

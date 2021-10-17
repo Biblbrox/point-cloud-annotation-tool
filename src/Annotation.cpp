@@ -7,6 +7,11 @@
 #include <glm/vec3.hpp>
 #include <opencv4/opencv2/opencv.hpp>
 #include <opencv4/opencv2/tracking.hpp>
+#include <QInputDialog>
+#include <QDir>
+#include <QLineEdit>
+#include <QObject>
+#include <QTranslator>
 
 #include "cvtools.hpp"
 
@@ -51,6 +56,11 @@ Annotation::Annotation(const PointCloudTPtr cloud, vector<int> &slice, string ty
     std::cout << "X: " << m_imgBbox.x << ", ";
     std::cout << "Y: " << m_imgBbox.y << "\n";
     cv::destroyWindow(roiWindow);
+
+    m_occluded = QInputDialog::getInt(nullptr, QObject::tr("QInputDialog::getText()"),
+                                      QObject::tr("Enter object occluded number(0 = fully visible, "
+                                                  "1 = partly occluded, 2 = largely occluded, "
+                                                  "3 = unknown):\n"));
 
     float truncated = cvtools::calcTruncated(m_img, m_imgBbox, cv::Point(0, 0));
     std::cout << "Truncated: " << truncated << "\n";
@@ -119,7 +129,7 @@ BoxLabel Annotation::getBoxLabelKitti()
     // Integer (0,1,2,3) indicating occlusion state:
     // 0 = fully visible, 1 = partly occluded
     // 2 = largely occluded, 3 = unknown
-    label.detail.occluded = 0;
+    label.detail.occluded = m_occluded;
 
     // Observation angle of object, ranging [-pi..pi]
 //    glm::vec3 objectPos{pos[0], pos[1], pos[2]};

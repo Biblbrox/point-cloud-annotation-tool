@@ -243,6 +243,11 @@ private:
 
     cv::Mat m_img;
 
+    // Integer (0,1,2,3) indicating occlusion state:
+    //                     0 = fully visible, 1 = partly occluded
+    //                     2 = largely occluded, 3 = unknown
+    int m_occluded;
+
     // NOTE not used
     bool m_visible;
     bool m_lock;

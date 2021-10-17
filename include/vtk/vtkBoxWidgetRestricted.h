@@ -16,7 +16,7 @@
  *
  */
 
-class vtkBoxWidgetRestricted: public vtkBoxWidget{
+class vtkBoxWidgetRestricted: public vtkBoxWidget {
 public:
     static vtkBoxWidgetRestricted *New();
 
