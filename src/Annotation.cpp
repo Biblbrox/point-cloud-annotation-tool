@@ -5,6 +5,9 @@
 #include <vtk/vtkBoxWidgetCallback.h>
 #include <vtkRect.h>
 #include <glm/vec3.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/epsilon.hpp>
+#include <glm/gtc/constants.hpp>
 #include <opencv4/opencv2/opencv.hpp>
 #include <opencv4/opencv2/tracking.hpp>
 #include <QInputDialog>
@@ -61,9 +64,6 @@ Annotation::Annotation(const PointCloudTPtr cloud, vector<int> &slice, string ty
                                       QObject::tr("Enter object occluded number(0 = fully visible, "
                                                   "1 = partly occluded, 2 = largely occluded, "
                                                   "3 = unknown):\n"));
-
-    float truncated = cvtools::calcTruncated(m_img, m_imgBbox, cv::Point(0, 0));
-    std::cout << "Truncated: " << truncated << "\n";
 
     // init variable
     initial();
@@ -132,10 +132,16 @@ BoxLabel Annotation::getBoxLabelKitti()
     label.detail.occluded = m_occluded;
 
     // Observation angle of object, ranging [-pi..pi]
-//    glm::vec3 objectPos{pos[0], pos[1], pos[2]};
-//    glm::vec3 vcamObj = m_cameraPos - objectPos;
-//    glm::vec3 vobjDir =
-    label.detail.alpha = 0.0;
+    glm::vec3 objectPos{pos[0], pos[1], pos[2]};
+//    glm::vec3 vcamObj = m_cameraPos - objectPos; // TODO: zero division
+    glm::vec3 vobjDir;
+    glm::vec3 vorientation = glm::vec3(orientation[0], orientation[1], orientation[2]);
+    if (glm::all(glm::epsilonEqual(vorientation, glm::vec3(0.f), glm::epsilon<float>())))
+        vobjDir = {0.f, 0.f, 0.f};
+    else
+        vobjDir = glm::normalize(glm::vec3(orientation[0], orientation[1], orientation[2]));
+
+    label.detail.alpha = glm::dot(vobjDir, {1.f, 0.f, 0.f});
 
     // 2D bounding box of object in the image (0-based index):
     // contains left, top, right, bottom pixel coordinates
@@ -150,17 +156,21 @@ BoxLabel Annotation::getBoxLabelKitti()
     label.data[5] = scale[0];
 
     // Position of center
+//    label.data[0] = pos[0];
+//    label.data[1] = pos[1];
+//    label.data[2] = pos[2];
     memcpy(label.data, pos, 3 * sizeof(double));
 
     // Rotation ry around Y-axis in camera coordinates [-pi..pi]
-    label.detail.yaw = orientation[2] / 180 * vtkMath::Pi();
+    label.detail.yaw = orientation[2] / 180 * vtkMath::Pi(); // To radians
 
     return label;
 }
 
 void Annotation::applyTransform(vtkSmartPointer<vtkTransform> t)
 {
-    if (t == m_transform) return;
+    if (t == m_transform)
+        return;
 
     m_transform = t;
     m_actor->SetUserTransform(t);

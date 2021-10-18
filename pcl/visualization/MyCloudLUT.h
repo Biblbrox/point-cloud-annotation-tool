@@ -7,9 +7,7 @@
 
 class MyCloudLUT
 {
-
 public:
-
     /** Get a color from the lookup table with a given id.
         *
         * The id should be less than the size of the LUT (see size()). */
@@ -23,7 +21,6 @@ public:
 
     /** Get a raw pointer to the lookup table. */
     static const unsigned char* data ();
-
 };
 
 

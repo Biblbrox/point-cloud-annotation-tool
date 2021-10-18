@@ -395,9 +395,9 @@ void Visualizer::openFile()
     QString homeDir = QStandardPaths::displayName(QStandardPaths::HomeLocation);
     m_pointcloudFileName = QFileDialog::getOpenFileName(this, tr("Open PCD file"), homeDir,
                                                       tr("PCD Files (*.pcd *.bin)")).toStdString();
-    m_calMatrixFileName = QFileDialog::getOpenFileName(this, tr("Open calibration matrix file"),
-                                                     homeDir,
-                                                     tr("Txt Files (*.txt)")).toStdString();
+//    m_calMatrixFileName = QFileDialog::getOpenFileName(this, tr("Open calibration matrix file"),
+//                                                     homeDir,
+//                                                     tr("Txt Files (*.txt)")).toStdString();
 
     const char* imgTypes = "Image Files (*.png *bmp *.jpg *.jpeg)";
     m_imgFileName = QFileDialog::getOpenFileName(this, tr("Open image file name"),
@@ -420,7 +420,7 @@ void Visualizer::openFile()
     std::cout << "cloud point number: " << m_cloud->width * m_cloud->height << endl;
 
     // Load calibration matrix
-    m_calMatrix = loadMatFromFile(m_calMatrixFileName);
+//    m_calMatrix = loadMatFromFile(m_calMatrixFileName);
     m_img = cv::imread(m_imgFileName);
 
     m_annotationFileName = m_pointcloudFileName + ".txt";

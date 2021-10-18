@@ -19,10 +19,9 @@ vtkAnnotationBoxSource::vtkAnnotationBoxSource()
     this->SetNumberOfInputPorts(0);
 }
 
-int vtkAnnotationBoxSource::RequestData(
-        vtkInformation *vtkNotUsed(request),
-        vtkInformationVector **vtkNotUsed(inputVector),
-        vtkInformationVector *outputVector)
+int vtkAnnotationBoxSource::RequestData(vtkInformation* vtkNotUsed(request),
+                                        vtkInformationVector** vtkNotUsed(inputVector),
+                                        vtkInformationVector* outputVector)
 {
     // get the info object
     vtkInformation *outInfo = outputVector->GetInformationObject(0);

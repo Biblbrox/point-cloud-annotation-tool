@@ -5,6 +5,7 @@
 #include <common.h>
 #include <vtkSmartPointer.h>
 #include <glm/vec3.hpp>
+#include <glm/gtc/constants.hpp>
 #include <opencv4/opencv2/opencv.hpp>
 
 using namespace std;
@@ -42,69 +43,66 @@ struct BoxLabel
     double cameraPosX;
     double cameraPosY;
     double cameraPosZ;
-    union
+    double data[7];
+    struct
     {
-        double data[7];
-        struct
-        {
-            /**
-             * Float from 0 (non-truncated) to 1 (truncated), where
-             * truncated refers to the object leaving image boundaries
-             */
-            double truncated;
-            /**
-             * Integer (0,1,2,3) indicating occlusion state:
-             * 0 = fully visible, 1 = partly occluded
-             * 2 = largely occluded, 3 = unknown
-             */
-            int occluded;
+        /**
+         * Float from 0 (non-truncated) to 1 (truncated), where
+         * truncated refers to the object leaving image boundaries
+         */
+        double truncated;
+        /**
+         * Integer (0,1,2,3) indicating occlusion state:
+         * 0 = fully visible, 1 = partly occluded
+         * 2 = largely occluded, 3 = unknown
+         */
+        int occluded;
 
-            /**
-             * Observation angle of object, ranging [-pi..pi]
-             */
-            double alpha;
+        /**
+         * Observation angle of object, ranging [-pi..pi]
+         */
+        double alpha;
 
-            /**
-             * 2D bounding box of object in the image (0-based index):
-             * contains left, top, right, bottom pixel coordinates
-             */
-            double left;
-            double top;
-            double right;
-            double bottom;
+        /**
+         * 2D bounding box of object in the image (0-based index):
+         * contains left, top, right, bottom pixel coordinates
+         */
+        double left;
+        double top;
+        double right;
+        double bottom;
 
-            /**
-             * 3D object dimensions: height, width, length (in meters)
-             */
-            double length;
-            double width;
-            double height;
+        /**
+         * 3D object dimensions: height, width, length (in meters)
+         */
+        double length;
+        double width;
+        double height;
 
-            /**
-             * 3D object location x,y,z in camera coordinates (in meters)
-             */
-            double center_x;
-            double center_y;
-            double center_z;
+        /**
+         * 3D object location x,y,z in camera coordinates (in meters)
+         */
+        double center_x;
+        double center_y;
+        double center_z;
 
-            /**
-             * Rotation ry around Y-axis in camera coordinates [-pi..pi]
-             */
-            double yaw;
-        } detail;
-    };
+        /**
+         * Rotation ry around Y-axis in camera coordinates [-pi..pi]
+         */
+        double yaw;
+    } detail;
 
     string toString(DatasetFormat fmt)
     {
         char buffer[300];
         if (fmt == DatasetFormat::KITTI) {
-            sprintf(buffer, "%s %f %i %f %f %f %f %f %f %f %f %f %f %f",
+            sprintf(buffer, "%s %f %i %f %f %f %f %f %f %f %f %f %f %f %f",
                     type.c_str(), detail.truncated, detail.occluded, detail.alpha,
                     detail.left, detail.top, detail.right, detail.bottom,
-                    data[3], data[4], data[5], data[0], data[1], data[2]);
+                    data[3], data[4], data[5], data[2], data[1], data[0], detail.yaw - glm::half_pi<float>());
         } else {
             sprintf(buffer, "%s %f %f %f %f %f %f %f",
-                type.c_str(), data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
+                    type.c_str(), data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
         }
 
         return buffer;
@@ -239,7 +237,7 @@ private:
     cv::Rect m_imgBbox;
 
     // Position of sensor
-    glm::vec3 m_cameraPos[3];
+    glm::vec3 m_cameraPos;
 
     cv::Mat m_img;
 

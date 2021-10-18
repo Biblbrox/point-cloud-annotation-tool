@@ -12,8 +12,9 @@
 
 using pcl::visualization::PointCloudColorHandler;
 
-template <typename PointT>
-class PointCloudColorHandlerLUT : public PointCloudColorHandler<PointT> {
+template<typename PointT>
+class PointCloudColorHandlerLUT : public PointCloudColorHandler<PointT>
+{
 
 public:
     typedef pcl::PointCloud<PointT> PointCloud;
@@ -24,37 +25,41 @@ public:
     typedef boost::shared_ptr<const PointCloudColorHandlerLUT<PointT> > ConstPtr;
 
     /** \brief Constructor. */
-    PointCloudColorHandlerLUT () :
-        PointCloudColorHandler<PointT>()
+    PointCloudColorHandlerLUT() :
+            PointCloudColorHandler<PointT>()
     {
-         capable_ = false;
+        capable_ = false;
     }
 
     /** \brief Constructor. */
-    PointCloudColorHandlerLUT (const PointCloudConstPtr &cloud):
-        PointCloudColorHandler<PointT>(cloud)
+    PointCloudColorHandlerLUT(const PointCloudConstPtr &cloud) :
+            PointCloudColorHandler<PointT>(cloud)
     {
-         setInputCloud (cloud);
+        setInputCloud(cloud);
     }
 
     /** \brief Destructor. */
-    virtual ~PointCloudColorHandlerLUT () {}
+    virtual ~PointCloudColorHandlerLUT()
+    {}
 
     /** \brief Check if this handler is capable of handling the input data or not. */
     inline bool
-    isCapable () const {
+    isCapable() const
+    {
         return (capable_);
     }
 
     /** \brief Abstract getName method. */
     virtual std::string
-    getName () const {
+    getName() const
+    {
         return "";
     };
 
     /** \brief Abstract getFieldName method. */
     virtual std::string
-    getFieldName () const{
+    getFieldName() const
+    {
         return "";
     };
 
@@ -64,25 +69,25 @@ public:
     * the input cloud was given as a valid pointer), false otherwise
     */
     virtual bool
-    getColor (vtkSmartPointer<vtkDataArray> &scalars) const {
+    getColor(vtkSmartPointer<vtkDataArray> &scalars) const
+    {
         if (!capable_ || !cloud_)
             return (false);
 
         if (!scalars)
-            scalars = vtkSmartPointer<vtkUnsignedCharArray>::New ();
-        scalars->SetNumberOfComponents (3);
+            scalars = vtkSmartPointer<vtkUnsignedCharArray>::New();
+        scalars->SetNumberOfComponents(3);
 
-        vtkIdType nr_points = cloud_->points.size ();
-        reinterpret_cast<vtkUnsignedCharArray*> (&(*scalars))->SetNumberOfTuples (nr_points);
-        unsigned char* colors = reinterpret_cast<vtkUnsignedCharArray*> (&(*scalars))->GetPointer (0);
+        vtkIdType nr_points = cloud_->points.size();
+        reinterpret_cast<vtkUnsignedCharArray *> (&(*scalars))->SetNumberOfTuples(nr_points);
+        unsigned char *colors = reinterpret_cast<vtkUnsignedCharArray *> (&(*scalars))->GetPointer(
+                0);
 
         int j = 0;
-        for (vtkIdType cp = 0; cp < nr_points; ++cp)
-        {
-            if (pcl::isFinite (cloud_->points[cp]))
-            {
-                const pcl::RGB& color = MyCloudLUT::at (label[cp] % MyCloudLUT::size ());
-                colors[j    ] = color.r;
+        for (vtkIdType cp = 0; cp < nr_points; ++cp) {
+            if (pcl::isFinite(cloud_->points[cp])) {
+                const pcl::RGB &color = MyCloudLUT::at(label[cp] % MyCloudLUT::size());
+                colors[j] = color.r;
                 colors[j + 1] = color.g;
                 colors[j + 2] = color.b;
                 j += 3;
@@ -97,14 +102,15 @@ public:
     * \param[in] cloud the input cloud to be used by the handler
     */
     virtual void
-    setInputCloud (const PointCloudConstPtr &cloud)
+    setInputCloud(const PointCloudConstPtr &cloud)
     {
         cloud_ = cloud;
     }
 
-    void setLabel(int* value){
+    void setLabel(int *value)
+    {
         label = value;
-        capable_=true;
+        capable_ = true;
     };
 
 
@@ -112,7 +118,7 @@ private:
     /**
      * @brief array of cloud label
      */
-    int* label;
+    int *label;
 
     // Members derived from the base class
     using PointCloudColorHandler<PointT>::cloud_;
@@ -120,4 +126,5 @@ private:
     using PointCloudColorHandler<PointT>::field_idx_;
     using PointCloudColorHandler<PointT>::fields_;
 };
+
 #endif

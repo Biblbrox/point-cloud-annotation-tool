@@ -2,7 +2,8 @@
 
 vtkStandardNewMacro(vtkBoxWidgetRestricted);
 
-void vtkBoxWidgetRestricted::Rotate(int X, int Y, double *p1, double *p2, double *vpn){
+void vtkBoxWidgetRestricted::Rotate(int X, int Y, double *p1, double *p2, double *vpn)
+{
     double *pts =
             static_cast<vtkDoubleArray *>(this->Points->GetData())->GetPointer(0);
     double *center =

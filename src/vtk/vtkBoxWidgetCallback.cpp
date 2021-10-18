@@ -24,7 +24,8 @@ void vtkBoxWidgetCallback0::Execute(vtkObject *caller, unsigned long, void *)
     }
 }
 
-void vtkBoxWidgetCallback0::setAnno(Annotation *value){
+void vtkBoxWidgetCallback0::setAnno(Annotation *value)
+{
     m_anno = value;
 }
 
