@@ -9,16 +9,12 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/visualization/point_cloud_color_handlers.h>
 #include <pcl/visualization/common/actor_map.h>
-#include <boost/unordered/unordered_map_fwd.hpp>
 #include <QFileDialog>
-#include <QVTKWidget.h>
 #include <vtkOrientationMarkerWidget.h>
 #include <vtkAxesActor.h>
 #include <vtkTransform.h>
-#include <pcl/visualization/PointCloudColorHandlerLUT.h>
 #include <pcl/visualization/mouse_event.h>
 #include <vtkPropPicker.h>
-#include <QBoxLayout>
 #include <QMessageBox>
 #include <vtkRenderWindow.h>
 #include <view/flowlayout.h>
@@ -32,8 +28,9 @@ using namespace std;
 #define SELECTED_POINT 1
 #define GROUND_POINT 2
 
-Visualizer::Visualizer(QWidget *parent)
+Visualizer::Visualizer(DatasetFormat datasetType, QWidget *parent)
         : QMainWindow(parent),
+          m_datasetType(datasetType),
           m_ui(new Ui::MainWindow)
 {
 
@@ -84,14 +81,27 @@ void Visualizer::initialize()
     m_ui->qvtkWidget->update();
 
     // init label type
-    Annotation::getTypes()->clear();
-    Annotation::getTypes()->push_back("dontCare");
-    Annotation::getTypes()->push_back("cyclist");
-    Annotation::getTypes()->push_back("pedestrian");
-    Annotation::getTypes()->push_back("vehicle");
-    Annotation::getTypes()->push_back("unknown");
+    if (m_datasetType == DatasetFormat::KITTI) {
+        Annotation::getTypes()->clear();
+        Annotation::getTypes()->push_back("DontCare");
+        Annotation::getTypes()->push_back("Cyclist");
+        Annotation::getTypes()->push_back("Pedestrian");
+        Annotation::getTypes()->push_back("Car");
+        Annotation::getTypes()->push_back("Van");
+        Annotation::getTypes()->push_back("Truck");
+        Annotation::getTypes()->push_back("Person_sitting");
+        Annotation::getTypes()->push_back("Tram");
+    } else {
+        Annotation::getTypes()->clear();
+        Annotation::getTypes()->push_back("dontCare");
+        Annotation::getTypes()->push_back("cyclist");
+        Annotation::getTypes()->push_back("pedestrian");
+        Annotation::getTypes()->push_back("vehicle");
+        Annotation::getTypes()->push_back("unknown");
+    }
+
     FlowLayout *layout = new FlowLayout();
-    for (auto type : *(Annotation::getTypes())) {
+    for (const auto& type : *(Annotation::getTypes())) {
         QPushButton *button = new QPushButton(QString::fromStdString(type));
         connect(button, &QPushButton::clicked, this,
                 [=]() { this->typeButtonClickedProcess(button->text().toStdString()); });
@@ -105,8 +115,8 @@ void Visualizer::initialize()
         layout->addWidget(button);
     }
     m_ui->groupBox_Types->setLayout(layout);
-    m_ui->groupBox_Types->setMaximumWidth(200);
-    m_ui->groupBox_Types->setMaximumHeight(200);
+    //m_ui->groupBox_Types->setMaximumWidth(200);
+    //xm_ui->groupBox_Types->setMaximumHeight(200);
 
 
     //init annotation
@@ -114,8 +124,7 @@ void Visualizer::initialize()
     m_currPickedAnnotation = nullptr;
 
     //axes
-    vtkSmartPointer<vtkAxesActor> axes =
-            vtkSmartPointer<vtkAxesActor>::New();
+    vtkSmartPointer<vtkAxesActor> axes = vtkSmartPointer<vtkAxesActor>::New();
     m_axesWidget = vtkSmartPointer<vtkOrientationMarkerWidget>::New();
     m_axesWidget->SetOrientationMarker(axes);
 //  m_axesWidget->SetInteractor( viewer->getInteractorStyle()->GetInteractor() );

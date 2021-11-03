@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
-project(point_cloud_annotation_tool)
+set(PROJECT_NAME point_cloud_annotation_tool)
 
 set(CMAKE_CXX_COMPILER_VERSION 17)
 set(CMAKE_CXX_STANDARD 17)
@@ -12,11 +12,11 @@ if(MSVC)
     set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 endif()
 # Use ccache to speed up compile process
-find_program(CCACHE_FOUND ccache)
-if(CCACHE_FOUND)
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
-endif(CCACHE_FOUND)
+#find_program(CCACHE_FOUND ccache)
+#if(CCACHE_FOUND)
+#    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+#    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+#endif(CCACHE_FOUND)
 
 if(POLICY CMP0071)
     cmake_policy(SET CMP0071 NEW)
@@ -35,7 +35,6 @@ find_package(GLM REQUIRED)
 find_package(OpenCV REQUIRED)
 
 INCLUDE(${VTK_USE_FILE}) # include UseVTK.cmake
-message(STATUS "VTK_LIBRARIES: ${VTK_LIBRARIES}")
 
 find_package(PCL REQUIRED segmentation filters visualization)
 include_directories(${PCL_INCLUDE_DIRS})
@@ -57,27 +56,13 @@ FILE(GLOB_RECURSE HPP RELATIVE ${PROJECT_SOURCE_DIR} "include/*.hpp" "include/*.
 
 set(project_source
         ${HPP} ${CPP}
-    # common.h
-    #main.cpp
-    # visualizer.h
-    #visualizer.cpp
-    # Annotaion.h
-    #    Annotation.cpp
-    # vtkBoxWidgetCallback.h
-    #vtkBoxWidgetCallback.cpp
-    # vtkBoxWidgetRestricted.h
-    #vtkBoxWidgetRestricted.cpp
-    # vtkAnnotationBoxSource.h
-    #vtkAnnotationBoxSource.cpp
-    # pcl/visualization/pcl_visualizer_extented.h
-    pcl/visualization/pcl_visualizer_extented.cpp
-    # pcl/visualization/MyCloudLUT.h
-    pcl/visualization/MyCloudLUT.cpp
-    # pcl/visualization/PointCloudColorHandlerLUT.h
-    # view/flowlayout.h
-    view/flowlayout.cpp
-    )
-
+        # pcl/visualization/pcl_visualizer_extented.h
+        pcl/visualization/pcl_visualizer_extented.cpp
+        # pcl/visualization/MyCloudLUT.h
+        pcl/visualization/MyCloudLUT.cpp
+        # pcl/visualization/PointCloudColorHandlerLUT.h
+        # view/flowlayout.h
+        view/flowlayout.cpp)
 
 add_executable(${PROJECT_NAME} ${project_source} ui_mainwindow.h)
 target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES} Qt5::Widgets vtkGUISupportQt

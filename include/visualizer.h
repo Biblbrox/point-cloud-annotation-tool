@@ -15,7 +15,7 @@ using namespace std;
 class Visualizer:public QMainWindow
 {
 public:
-    explicit Visualizer(QWidget *parent = 0);
+    explicit Visualizer(DatasetFormat datasetType, QWidget *parent = 0);
     ~Visualizer();
     void highlightPoint(vector<int>& slice);
     void defaultColorPoint(vector<int>& slice);
@@ -96,6 +96,8 @@ private:
 
     // for pick
     Annotation *m_currPickedAnnotation;
+
+    DatasetFormat m_datasetType;
 };
 
 #endif // VISUALIZER_H

@@ -4,6 +4,8 @@
 #include <string_view>
 #include <common.h>
 #include <vtkSmartPointer.h>
+#include <vtkBoundingBox.h>
+#include <utility>
 #include <glm/vec3.hpp>
 #include <glm/gtc/constants.hpp>
 #include <opencv4/opencv2/opencv.hpp>
@@ -17,19 +19,21 @@ enum class DatasetFormat
 };
 
 
+/**
+ * Represent bounding box params.
+ */
 struct BoxLabel
 {
-    BoxLabel()
+    BoxLabel() : type("unknown")
     {
-        type = "unknown";
         this->detail.center_x = this->detail.center_y = this->detail.center_z = 0;
         this->detail.yaw = 2;
         this->detail.length = this->detail.width = this->detail.height = 1;
     }
 
     BoxLabel(const double p1[3], const double p2[3], string type_ = "unknown")
+            : type(std::move(type_))
     {
-        type = type_;
         this->detail.center_x = (p1[0] + p2[0]) / 2;
         this->detail.center_y = (p1[1] + p2[1]) / 2;
         this->detail.center_z = (p1[2] + p2[2]) / 2;
@@ -40,10 +44,11 @@ struct BoxLabel
     }
 
     string type;
-    double cameraPosX;
+    /*double cameraPosX;
     double cameraPosY;
-    double cameraPosZ;
+    double cameraPosZ;*/
     double data[7];
+    vtkBoundingBox box;
     struct
     {
         /**
@@ -99,7 +104,7 @@ struct BoxLabel
             sprintf(buffer, "%s %f %i %f %f %f %f %f %f %f %f %f %f %f %f",
                     type.c_str(), detail.truncated, detail.occluded, detail.alpha,
                     detail.left, detail.top, detail.right, detail.bottom,
-                    data[3], data[4], data[5], data[2], data[1], data[0], detail.yaw - glm::half_pi<float>());
+                    data[5], data[3], data[4], -data[1], -data[2], data[0], detail.yaw);
         } else {
             sprintf(buffer, "%s %f %f %f %f %f %f %f",
                     type.c_str(), data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
@@ -137,7 +142,7 @@ public:
      * @param visible_
      * @param lock_
      */
-    Annotation(const BoxLabel &label, bool visible_ = true, bool lock_ = false);
+    explicit Annotation(const BoxLabel &label, bool visible_ = true, bool lock_ = false);
 
     /**
      * @brief Annotation construct from part of cloud points
@@ -250,12 +255,6 @@ private:
     bool m_visible;
     bool m_lock;
 
-    /**
-     * Input 2D bounding box from image
-     * @return vtkRectd bounding box
-     */
-    cv::Rect input2DBbox() const;
-
 public:
     /**
      * @brief get types vector pointer
@@ -326,7 +325,7 @@ public:
      * @brief save annotations to file
      * @param filename
      */
-    void saveAnnotations(string filename);
+    void saveAnnotations(const string& filename);
 
     vector<Annotation *> &getAnnotations();
 

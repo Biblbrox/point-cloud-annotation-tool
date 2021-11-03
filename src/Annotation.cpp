@@ -4,17 +4,12 @@
 #include <vtk/vtkBoxWidgetRestricted.h>
 #include <vtk/vtkBoxWidgetCallback.h>
 #include <vtkRect.h>
-#include <glm/vec3.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/epsilon.hpp>
 #include <glm/gtc/constants.hpp>
 #include <opencv4/opencv2/opencv.hpp>
-#include <opencv4/opencv2/tracking.hpp>
 #include <QInputDialog>
-#include <QDir>
-#include <QLineEdit>
 #include <QObject>
-#include <QTranslator>
 
 #include "cvtools.hpp"
 
@@ -123,7 +118,6 @@ BoxLabel Annotation::getBoxLabelKitti()
 
     // Float from 0 (non-truncated) to 1 (truncated), where
     // truncated refers to the object leaving image boundaries
-    // TODO: fix hardcoded border
     label.detail.truncated = cvtools::calcTruncated(m_img, m_imgBbox, cv::Point(0, 0));
 
     // Integer (0,1,2,3) indicating occlusion state:
@@ -151,15 +145,24 @@ BoxLabel Annotation::getBoxLabelKitti()
     label.detail.bottom = m_imgBbox.y + m_imgBbox.height;
 
     // Height, width and length of object
-    label.data[3] = scale[2];
+    label.data[3] = scale[0];
     label.data[4] = scale[1];
-    label.data[5] = scale[0];
+    label.data[5] = scale[2];
 
     // Position of center
-//    label.data[0] = pos[0];
-//    label.data[1] = pos[1];
-//    label.data[2] = pos[2];
     memcpy(label.data, pos, 3 * sizeof(double));
+    label.data[2] -= scale[1] / 2.f;
+    std::cout << "X length: " << label.data[3] << "\n";
+    std::cout << "Y length: " << label.data[4] << "\n";
+    std::cout << "Z length: " << label.data[5] << "\n";
+
+    std::cout << "Center pos x:" << m_center[0] << "\n";
+    std::cout << "Center pos y:" << m_center[1] << "\n";
+    std::cout << "Center pos z:" << m_center[2] << "\n";
+
+    std::cout << "Center pos x(through data):" << pos[0] << "\n";
+    std::cout << "Center pos y(through data):" << pos[1] << "\n";
+    std::cout << "Center pos z(through data):" << pos[2] << "\n";
 
     // Rotation ry around Y-axis in camera coordinates [-pi..pi]
     label.detail.yaw = orientation[2] / 180 * vtkMath::Pi(); // To radians
@@ -246,7 +249,6 @@ void Annotation::adjustToAnchor()
     t->Translate(m_center);
     t->RotateZ(r[2]);
     t->Scale(s);
-
     //        transform->Scale(s);
     m_boxWidget->SetTransform(t);
     applyTransform(t);
@@ -358,18 +360,19 @@ vector<string> *Annotation::getTypes()
     return m_types;
 }
 
-size_t Annotation::getTypeIndex(std::string type_)
+size_t Annotation::getTypeIndex(std::string type)
 {
     for (int i = 0; i < m_types->size(); i++)
-        if (m_types->at(i) == type_) return i;
+        if (m_types->at(i) == type)
+            return i;
 
-    m_types->push_back(type_);
+    m_types->push_back(type);
     return m_types->size() - 1;
 }
 
-pcl::RGB Annotation::getColor(string type_)
+pcl::RGB Annotation::getColor(string type)
 {
-    return pcl::GlasbeyLUT::at(getTypeIndex(type_));
+    return pcl::GlasbeyLUT::at(getTypeIndex(type));
 }
 
 void
@@ -445,7 +448,7 @@ void Annotations::loadAnnotations(string filename)
     while (input >> type) {
         BoxLabel label;
         label.type = type;
-        for (double &j : label.data)
+        for (double& j : label.data)
             input >> j;
 
         m_annotations.push_back(new Annotation(label));
@@ -454,7 +457,7 @@ void Annotations::loadAnnotations(string filename)
     input.close();
 }
 
-void Annotations::saveAnnotations(string filename)
+void Annotations::saveAnnotations(const string& filename)
 {
     if (m_annotations.empty())
         return;
