@@ -101,15 +101,9 @@ struct BoxLabel
                    << " " << detail.right << " " << detail.bottom << " " << data[5]
                    << " " << data[3] << " " << data[4] << " " << -data[1] << " " << -data[2]
                    << " " << data[0] << " " << detail.yaw;
-//            sprintf(buffer, "%s %lf %i %f %f %f %f %f %f %f %f %f %f %f %f",
-//                    type.c_str(), detail.truncated, detail.occluded, detail.alpha,
-//                    detail.left, detail.top, detail.right, detail.bottom,
-//                    data[5], data[3], data[4], -data[1], -data[2], data[0], detail.yaw);
         } else {
             buffer << type << " " << data[0] << " " << data[1] << " " << data[2]
                    << " " << data[3] << " " <<  data[4] << " " << data[5] << " " << data[6];
-//            sprintf(buffer, "%s %f %f %f %f %f %f %f",
-//                    type.c_str(), data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
         }
 
         return buffer.str();
@@ -144,7 +138,7 @@ public:
      * @param visible_
      * @param lock_
      */
-    explicit Annotation(const BoxLabel &label, bool visible_ = true, bool lock_ = false);
+    explicit Annotation(const BoxLabel& label, bool visible_ = true, bool lock_ = false);
 
     /**
      * @brief Annotation construct from part of cloud points
@@ -152,7 +146,7 @@ public:
      * @param slice
      * @param type_
      */
-    Annotation(const PointCloudTPtr cloud, std::vector<int> &slice, std::string type_, cv::Mat img);
+    Annotation(const PointCloudTPtr cloud, std::vector<int>& slice, std::string type_, cv::Mat img);
 
     ~Annotation();
 
@@ -178,7 +172,7 @@ public:
      * @brief enter picked state, show boxwidget which allow to adjust annotation
      * @param interactor
      */
-    void picked(vtkRenderWindowInteractor *interactor);
+    void picked(vtkRenderWindowInteractor* interactor);
 
     /**
      * @brief disable boxWidget
@@ -217,7 +211,7 @@ protected:
      * @param cloud
      * @param slice
      */
-    void setAnchorPoint(const PointCloudTPtr cloud, const std::vector<int> &slice);
+    void setAnchorPoint(const PointCloudTPtr cloud, const std::vector<int>& slice);
 
     /**
      * @brief computeScaleAndCenterShift
@@ -259,21 +253,21 @@ public:
      * @brief get types vector pointer
      * @return
      */
-    static std::vector<std::string> *getTypes();
+    static std::vector<std::string>* getTypes();
 
     /**
      * @brief getTypeIndex  auto add to vector map if has not
      * @param type_
      * @return
      */
-    static size_t getTypeIndex(std::string type_);
+    static size_t getTypeIndex(const std::string& type);
 
     /**
      * @brief getColor map type to color in pcl::GlasbeyLUT
      * @param type_
      * @return
      */
-    static pcl::RGB getColor(std::string type_);
+    static pcl::RGB getColor(const std::string& type);
 
     /**
      * @brief computeOBB compute max,min [x,y,z] aligned to xyz axis
@@ -283,13 +277,13 @@ public:
      * @param p2 max [x,y,z]
      */
     static void
-    computeOBB(const PointCloudTPtr cloud, std::vector<int> &slice, double p1[3], double p2[3]);
+    computeOBB(const PointCloudTPtr cloud, std::vector<int>& slice, double p1[3], double p2[3]);
 
 private:
     /**
      * @brief types all annotation type here
      */
-    static std::vector<std::string> *m_types;
+    static std::vector<std::string>* m_types;
 
 };
 
@@ -302,13 +296,13 @@ public:
      * @param actor
      * @return
      */
-    Annotation *getAnnotation(vtkActor *actor);
+    Annotation *getAnnotation(vtkActor* actor);
 
     explicit Annotations();
 
-    void push_back(Annotation *anno);
+    void push_back(Annotation* anno);
 
-    void remove(Annotation *anno);
+    void remove(Annotation* anno);
 
     void clear();
 

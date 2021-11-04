@@ -1,5 +1,5 @@
 #include <string_view>
-#include <Annotation.h>
+#include <annotation.h>
 #include <vtk/vtkAnnotationBoxSource.h>
 #include <vtk/vtkBoxWidgetRestricted.h>
 #include <vtk/vtkBoxWidgetCallback.h>
@@ -26,7 +26,7 @@ Annotation::Annotation(const BoxLabel& label, bool visible_, bool lock_)
     cubeTransform->PostMultiply();
     cubeTransform->Scale(label.detail.length, label.detail.width, label.detail.height);
     //        cubeTransform->RotateZ(label.detail.yaw);
-    cubeTransform->RotateZ(label.detail.yaw * 180 / vtkMath::Pi());
+    cubeTransform->RotateZ(vtkMath::DegreesFromRadians(label.detail.yaw));
     cubeTransform->Translate(label.detail.center_x, label.detail.center_y, label.detail.center_z);
 
     applyTransform(cubeTransform);
@@ -162,7 +162,6 @@ void Annotation::applyTransform(vtkSmartPointer<vtkTransform> t)
 
     m_transform = t;
     m_actor->SetUserTransform(t);
-
 }
 
 void Annotation::picked(vtkRenderWindowInteractor* interactor)
@@ -345,7 +344,7 @@ vector<string> *Annotation::getTypes()
     return m_types;
 }
 
-size_t Annotation::getTypeIndex(std::string type)
+size_t Annotation::getTypeIndex(const std::string& type)
 {
     for (int i = 0; i < m_types->size(); i++)
         if (m_types->at(i) == type)
@@ -355,7 +354,7 @@ size_t Annotation::getTypeIndex(std::string type)
     return m_types->size() - 1;
 }
 
-pcl::RGB Annotation::getColor(string type)
+pcl::RGB Annotation::getColor(const string& type)
 {
     return pcl::GlasbeyLUT::at(getTypeIndex(type));
 }

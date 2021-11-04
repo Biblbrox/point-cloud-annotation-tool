@@ -1,5 +1,5 @@
 #include <vtk/vtkBoxWidgetCallback.h>
-#include <Annotation.h>
+#include <annotation.h>
 #include <vtkBoxWidget.h>
 #include <vtkTransform.h>
 

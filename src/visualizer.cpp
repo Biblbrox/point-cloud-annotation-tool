@@ -1,6 +1,6 @@
 #include "visualizer.h"
 #include "ui_mainwindow.h"
-#include "Annotation.h"
+#include "annotation.h"
 #include "pcl/visualization/pcl_visualizer_extented.h"
 
 #include <pcl/io/pcd_io.h>

@@ -4,7 +4,7 @@
 #include "common.h"
 #include <QMainWindow>
 #include <pcl/visualization/PointCloudColorHandlerLUT.h>
-#include <Annotation.h>
+#include <annotation.h>
 
 namespace Ui {
 class MainWindow;

@@ -1,4 +1,5 @@
 #include "pcl/visualization/pcl_visualizer.h"
+
 using namespace std;
 using namespace pcl::visualization;
 
@@ -7,7 +8,7 @@ typedef pcl::PointCloud<pcl::PointXYZI> PointCloudT;
 bool loadBinFile(string filename_,PointCloudT& cloud_)
 {
     std::ifstream input(filename_.c_str(), std::ios_base::binary);
-    if(!input.good()){
+    if(!input.good()) {
         std::cerr<<"Cannot open file : "<<filename_<<std::endl;
         return false;
     }
@@ -25,15 +26,16 @@ bool loadBinFile(string filename_,PointCloudT& cloud_)
     return true;
 }
 
-int main(int argc, char *argv[]){
-    if (argc<=1){
+int main(int argc, char *argv[])
+{
+    if (argc<=1) {
         std::cerr<<"usage:: visiualizer pointCloudFilename"<<std::endl;
         return 0;
     }
 
     string filename=argv[1];
     PointCloudT::Ptr cloud(new PointCloudT);
-    if (!loadBinFile(filename,*cloud)){
+    if (!loadBinFile(filename,*cloud)) {
         return 0;
     }
 

@@ -4,7 +4,6 @@
 #include <opencv2/imgproc.hpp>
 #include <algorithm>
 
-
 namespace cvtools
 {
     /**
