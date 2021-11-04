@@ -81,8 +81,8 @@ void Visualizer::initialize()
     m_ui->qvtkWidget->update();
 
     // init label type
+    Annotation::getTypes()->clear();
     if (m_datasetType == DatasetFormat::KITTI) {
-        Annotation::getTypes()->clear();
         Annotation::getTypes()->push_back("DontCare");
         Annotation::getTypes()->push_back("Cyclist");
         Annotation::getTypes()->push_back("Pedestrian");
@@ -92,7 +92,6 @@ void Visualizer::initialize()
         Annotation::getTypes()->push_back("Person_sitting");
         Annotation::getTypes()->push_back("Tram");
     } else {
-        Annotation::getTypes()->clear();
         Annotation::getTypes()->push_back("dontCare");
         Annotation::getTypes()->push_back("cyclist");
         Annotation::getTypes()->push_back("pedestrian");
@@ -116,7 +115,7 @@ void Visualizer::initialize()
     }
     m_ui->groupBox_Types->setLayout(layout);
     //m_ui->groupBox_Types->setMaximumWidth(200);
-    //xm_ui->groupBox_Types->setMaximumHeight(200);
+    //m_ui->groupBox_Types->setMaximumHeight(200);
 
 
     //init annotation
@@ -166,8 +165,7 @@ void Visualizer::refresh()
 
 void Visualizer::pickAnnotation(double x, double y)
 {
-    vtkSmartPointer<vtkPropPicker> picker =
-            vtkSmartPointer<vtkPropPicker>::New();
+    vtkSmartPointer<vtkPropPicker> picker = vtkSmartPointer<vtkPropPicker>::New();
     picker->Pick(x, y, 0, m_viewer->getRendererCollection()->GetFirstRenderer());
     vtkActor *pickedActor = picker->GetActor();
 
@@ -272,7 +270,8 @@ void Visualizer::AreaPickingEventProcess(const pcl::visualization::AreaPickingEv
     vector<int> new_selected_slice;
     event.getPointsIndices(new_selected_slice);
 
-    if (new_selected_slice.empty()) return;
+    if (new_selected_slice.empty())
+        return;
 
     int s = m_viewer->getRenderWindowInteractor()->GetShiftKey();
     int a = m_viewer->getRenderWindowInteractor()->GetControlKey();
@@ -329,7 +328,9 @@ void Visualizer::showAnnotation()
 void Visualizer::threshold()
 {
     double threhold_;
-    if (m_ui->threshold_lineEdit->text().isEmpty()) return;
+    if (m_ui->threshold_lineEdit->text().isEmpty())
+        return;
+
     threhold_ = m_ui->threshold_lineEdit->text().toDouble();
 
     vector<int> slice;
@@ -344,7 +345,9 @@ void Visualizer::threshold()
 
 void Visualizer::planeDetect()
 {
-    if (m_ui->distanceThreshold_lineEdit->text().isEmpty()) return;
+    if (m_ui->distanceThreshold_lineEdit->text().isEmpty())
+        return;
+
     double distanceThreshold = m_ui->distanceThreshold_lineEdit->text().toDouble();
 
     pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);

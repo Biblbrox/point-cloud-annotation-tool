@@ -15,7 +15,7 @@
 
 using namespace std;
 
-Annotation::Annotation(const BoxLabel &label, bool visible_, bool lock_)
+Annotation::Annotation(const BoxLabel& label, bool visible_, bool lock_)
         : m_visible(visible_), m_lock(lock_), m_type(label.type)
 {
     // init variable
@@ -50,9 +50,6 @@ Annotation::Annotation(const PointCloudTPtr cloud, vector<int> &slice, string ty
     m_imgBbox = cv::selectROI(roiWindow, borderImg);
     m_imgBbox.x -= 40;
     m_imgBbox.y -= 40;
-    std::cout << "Selected roi: \n";
-    std::cout << "X: " << m_imgBbox.x << ", ";
-    std::cout << "Y: " << m_imgBbox.y << "\n";
     cv::destroyWindow(roiWindow);
 
     m_occluded = QInputDialog::getInt(nullptr, QObject::tr("QInputDialog::getText()"),
@@ -99,7 +96,7 @@ BoxLabel Annotation::getBoxLabel()
     m_transform->GetOrientation(orientation);
     memcpy(label.data, pos, 3 * sizeof(double));
     memcpy(label.data + 3, scale, 3 * sizeof(double));
-    label.detail.yaw = orientation[2] / 180 * vtkMath::Pi();
+    label.detail.yaw = vtkMath::RadiansFromDegrees(orientation[2]);
 
     return label;
 }
@@ -152,20 +149,8 @@ BoxLabel Annotation::getBoxLabelKitti()
     // Position of center
     memcpy(label.data, pos, 3 * sizeof(double));
     label.data[2] -= scale[1] / 2.f;
-    std::cout << "X length: " << label.data[3] << "\n";
-    std::cout << "Y length: " << label.data[4] << "\n";
-    std::cout << "Z length: " << label.data[5] << "\n";
-
-    std::cout << "Center pos x:" << m_center[0] << "\n";
-    std::cout << "Center pos y:" << m_center[1] << "\n";
-    std::cout << "Center pos z:" << m_center[2] << "\n";
-
-    std::cout << "Center pos x(through data):" << pos[0] << "\n";
-    std::cout << "Center pos y(through data):" << pos[1] << "\n";
-    std::cout << "Center pos z(through data):" << pos[2] << "\n";
-
     // Rotation ry around Y-axis in camera coordinates [-pi..pi]
-    label.detail.yaw = orientation[2] / 180 * vtkMath::Pi(); // To radians
+    label.detail.yaw = -vtkMath::RadiansFromDegrees(orientation[2]);
 
     return label;
 }
@@ -180,7 +165,7 @@ void Annotation::applyTransform(vtkSmartPointer<vtkTransform> t)
 
 }
 
-void Annotation::picked(vtkRenderWindowInteractor *interactor)
+void Annotation::picked(vtkRenderWindowInteractor* interactor)
 {
     // enable box widget
     m_boxWidget = vtkSmartPointer<vtkBoxWidgetRestricted>::New();
@@ -260,7 +245,7 @@ string Annotation::getType() const
     return m_type;
 }
 
-void Annotation::setType(std::string_view value)
+void Annotation::setType(const std::string& value)
 {
     if (value != m_type) {
         m_type = value;
@@ -435,7 +420,7 @@ size_t Annotations::getSize()
     return m_annotations.size();
 }
 
-void Annotations::loadAnnotations(string filename)
+void Annotations::loadAnnotations(const string& filename)
 {
     m_annotations.clear();
 
@@ -467,7 +452,7 @@ void Annotations::saveAnnotations(const string& filename)
         if (m_datasetType == DatasetFormat::KITTI)
             output << anno->getBoxLabelKitti().toString(m_datasetType) << "\n";
         else
-            output << anno->getBoxLabel().toString(m_datasetType) << std::endl;
+            output << anno->getBoxLabel().toString(m_datasetType) << "\n";
 
     output.close();
 }

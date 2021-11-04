@@ -12,12 +12,11 @@ void vtkBoxWidgetCallback0::Execute(vtkObject *caller, unsigned long, void *)
 {
     // Here we use the vtkBoxWidget to transform the underlying coneActor
     // (by manipulating its transformation matrix).
-    vtkSmartPointer<vtkTransform> t =
-            vtkSmartPointer<vtkTransform>::New();
+    vtkSmartPointer<vtkTransform> t = vtkSmartPointer<vtkTransform>::New();
     vtkBoxWidget *widget = reinterpret_cast<vtkBoxWidget*>(caller);
 
-    widget->GetTransform( t );
-    if (m_anno){
+    widget->GetTransform(t);
+    if (m_anno) {
         // widget->GetProp3D()->SetUserTransform(t);
         m_anno->applyTransform(t);
 

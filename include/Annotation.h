@@ -10,14 +10,12 @@
 #include <glm/gtc/constants.hpp>
 #include <opencv4/opencv2/opencv.hpp>
 
-using namespace std;
 
 enum class DatasetFormat
 {
     STANDARD,
     KITTI
 };
-
 
 /**
  * Represent bounding box params.
@@ -31,7 +29,7 @@ struct BoxLabel
         this->detail.length = this->detail.width = this->detail.height = 1;
     }
 
-    BoxLabel(const double p1[3], const double p2[3], string type_ = "unknown")
+    BoxLabel(const double p1[3], const double p2[3], std::string type_ = "unknown")
             : type(std::move(type_))
     {
         this->detail.center_x = (p1[0] + p2[0]) / 2;
@@ -43,11 +41,8 @@ struct BoxLabel
         this->detail.height = p2[2] - p1[2];
     }
 
-    string type;
-    /*double cameraPosX;
-    double cameraPosY;
-    double cameraPosZ;*/
-    double data[7];
+    std::string type;
+    double data[14];
     vtkBoundingBox box;
     struct
     {
@@ -97,20 +92,27 @@ struct BoxLabel
         double yaw;
     } detail;
 
-    string toString(DatasetFormat fmt)
+    std::string toString(DatasetFormat fmt)
     {
-        char buffer[300];
+        std::stringstream buffer;
         if (fmt == DatasetFormat::KITTI) {
-            sprintf(buffer, "%s %f %i %f %f %f %f %f %f %f %f %f %f %f %f",
-                    type.c_str(), detail.truncated, detail.occluded, detail.alpha,
-                    detail.left, detail.top, detail.right, detail.bottom,
-                    data[5], data[3], data[4], -data[1], -data[2], data[0], detail.yaw);
+            buffer << type << " " << detail.truncated << " " << detail.occluded
+                   << " " << detail.alpha << " " << detail.left << " " << detail.top
+                   << " " << detail.right << " " << detail.bottom << " " << data[5]
+                   << " " << data[3] << " " << data[4] << " " << -data[1] << " " << -data[2]
+                   << " " << data[0] << " " << detail.yaw;
+//            sprintf(buffer, "%s %lf %i %f %f %f %f %f %f %f %f %f %f %f %f",
+//                    type.c_str(), detail.truncated, detail.occluded, detail.alpha,
+//                    detail.left, detail.top, detail.right, detail.bottom,
+//                    data[5], data[3], data[4], -data[1], -data[2], data[0], detail.yaw);
         } else {
-            sprintf(buffer, "%s %f %f %f %f %f %f %f",
-                    type.c_str(), data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
+            buffer << type << " " << data[0] << " " << data[1] << " " << data[2]
+                   << " " << data[3] << " " <<  data[4] << " " << data[5] << " " << data[6];
+//            sprintf(buffer, "%s %f %f %f %f %f %f %f",
+//                    type.c_str(), data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
         }
 
-        return buffer;
+        return buffer.str();
     }
 };
 
@@ -150,18 +152,18 @@ public:
      * @param slice
      * @param type_
      */
-    Annotation(const PointCloudTPtr cloud, vector<int> &slice, string type_, cv::Mat img);
+    Annotation(const PointCloudTPtr cloud, std::vector<int> &slice, std::string type_, cv::Mat img);
 
     ~Annotation();
 
     /**
-     * @brief getBoxLabel get boxLabel from annotaion tranformation
+     * @brief getBoxLabel get boxLabel from annotation transformation
      * @return
      */
     BoxLabel getBoxLabel();
 
     /**
-     * @brief getBoxLabel get boxLabel from annotaion tranformation
+     * @brief getBoxLabel get boxLabel from annotation transformation in KITTI format
      * @return
      */
     BoxLabel getBoxLabelKitti();
@@ -193,11 +195,11 @@ public:
      * @brief change the type of annotation, and color too
      * @param value
      */
-    void setType(std::string_view value);
+    void setType(const std::string& value);
 
     vtkSmartPointer<vtkActor> getActor() const;
 
-    string getType() const;
+    std::string getType() const;
 
 protected:
     void initial();
@@ -215,7 +217,7 @@ protected:
      * @param cloud
      * @param slice
      */
-    void setAnchorPoint(const PointCloudTPtr cloud, const vector<int> &slice);
+    void setAnchorPoint(const PointCloudTPtr cloud, const std::vector<int> &slice);
 
     /**
      * @brief computeScaleAndCenterShift
@@ -227,7 +229,7 @@ protected:
 
 
 private:
-    string m_type;
+    std::string m_type;
     vtkSmartPointer<vtkAnnotationBoxSource> m_source;
     vtkSmartPointer<vtkActor> m_actor;
     vtkSmartPointer<vtkPolyDataMapper> m_mapper;
@@ -237,12 +239,9 @@ private:
     vtkSmartPointer<vtkBoxWidgetCallback0> m_boxWidgetCallback0;
     vtkSmartPointer<vtkBoxWidgetCallback1> m_boxWidgetCallback1;
 
-    vector<double *> m_anchorPoints;
+    std::vector<double *> m_anchorPoints;
     double m_center[3];
     cv::Rect m_imgBbox;
-
-    // Position of sensor
-    glm::vec3 m_cameraPos;
 
     cv::Mat m_img;
 
@@ -260,21 +259,21 @@ public:
      * @brief get types vector pointer
      * @return
      */
-    static vector<string> *getTypes();
+    static std::vector<std::string> *getTypes();
 
     /**
      * @brief getTypeIndex  auto add to vector map if has not
      * @param type_
      * @return
      */
-    static size_t getTypeIndex(string type_);
+    static size_t getTypeIndex(std::string type_);
 
     /**
      * @brief getColor map type to color in pcl::GlasbeyLUT
      * @param type_
      * @return
      */
-    static pcl::RGB getColor(string type_);
+    static pcl::RGB getColor(std::string type_);
 
     /**
      * @brief computeOBB compute max,min [x,y,z] aligned to xyz axis
@@ -284,13 +283,13 @@ public:
      * @param p2 max [x,y,z]
      */
     static void
-    computeOBB(const PointCloudTPtr cloud, vector<int> &slice, double p1[3], double p2[3]);
+    computeOBB(const PointCloudTPtr cloud, std::vector<int> &slice, double p1[3], double p2[3]);
 
 private:
     /**
      * @brief types all annotation type here
      */
-    static vector<string> *m_types;
+    static std::vector<std::string> *m_types;
 
 };
 
@@ -299,7 +298,7 @@ class Annotations
 {
 public:
     /**
-     * @brief from annotatin box actor to find annotation itself
+     * @brief from annotation box actor to find annotation itself
      * @param actor
      * @return
      */
@@ -319,21 +318,21 @@ public:
      * @brief load annotations from file
      * @param filename
      */
-    void loadAnnotations(string filename);
+    void loadAnnotations(const std::string& filename);
 
     /**
      * @brief save annotations to file
      * @param filename
      */
-    void saveAnnotations(const string& filename);
+    void saveAnnotations(const std::string& filename);
 
-    vector<Annotation *> &getAnnotations();
+    std::vector<Annotation*> &getAnnotations();
 
 protected:
     /**
      * @brief keep all annotation from current cloud
      */
-    vector<Annotation *> m_annotations;
+    std::vector<Annotation*> m_annotations;
     DatasetFormat m_datasetType;
 };
 
