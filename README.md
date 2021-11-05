@@ -1,6 +1,8 @@
 ##  point cloud annotation tool
 It is a tool used to annotate 3D box in point cloud. Point cloud in KITTI-bin format is supported. Annotation format is the same as Applo 3D format. Data examples can be found at [here](http://data.apollo.auto/help?name=data_intro_3d&data_key=lidar_obstacle_label&data_type=0&locale=en-us&lang=en).
 
+Now tool testing for KITTI label support.
+
 ### supported functions
 - load, save, visiualize
 - point cloud selection
