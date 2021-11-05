@@ -42,59 +42,62 @@ struct BoxLabel
     }
 
     std::string type;
-    double data[14];
-    vtkBoundingBox box;
-    struct
+    union
     {
-        /**
-         * Float from 0 (non-truncated) to 1 (truncated), where
-         * truncated refers to the object leaving image boundaries
-         */
-        double truncated;
-        /**
-         * Integer (0,1,2,3) indicating occlusion state:
-         * 0 = fully visible, 1 = partly occluded
-         * 2 = largely occluded, 3 = unknown
-         */
-        int occluded;
+        double data[14];
+        struct
+        {
+            /**
+             * Float from 0 (non-truncated) to 1 (truncated), where
+             * truncated refers to the object leaving image boundaries
+             */
+            double truncated;
+            /**
+             * Integer (0,1,2,3) indicating occlusion state:
+             * 0 = fully visible, 1 = partly occluded
+             * 2 = largely occluded, 3 = unknown
+             */
+            int occluded;
 
-        /**
-         * Observation angle of object, ranging [-pi..pi]
-         */
-        double alpha;
+            /**
+             * Observation angle of object, ranging [-pi..pi]
+             */
+            double alpha;
 
-        /**
-         * 2D bounding box of object in the image (0-based index):
-         * contains left, top, right, bottom pixel coordinates
-         */
-        double left;
-        double top;
-        double right;
-        double bottom;
+            /**
+             * 2D bounding box of object in the image (0-based index):
+             * contains left, top, right, bottom pixel coordinates
+             */
+            double left;
+            double top;
+            double right;
+            double bottom;
 
-        /**
-         * 3D object dimensions: height, width, length (in meters)
-         */
-        double length;
-        double width;
-        double height;
+            /**
+             * 3D object dimensions: height, width, length (in meters)
+             */
+            double height;
+            double width;
+            double length;
 
-        /**
-         * 3D object location x,y,z in camera coordinates (in meters)
-         */
-        double center_x;
-        double center_y;
-        double center_z;
+            /**
+             * 3D object location x,y,z in camera coordinates (in meters)
+             */
+            double center_x;
+            double center_y;
+            double center_z;
 
-        /**
-         * Rotation ry around Y-axis in camera coordinates [-pi..pi]
-         */
-        double yaw;
-    } detail;
+            /**
+             * Rotation ry around Y-axis in camera coordinates [-pi..pi]
+             */
+            double yaw;
+        } detail;
+    };
 
     std::string toString(DatasetFormat fmt)
     {
         std::stringstream buffer;
+        buffer.precision(12);
         if (fmt == DatasetFormat::KITTI) {
             buffer << type << " " << detail.truncated << " " << detail.occluded
                    << " " << detail.alpha << " " << detail.left << " " << detail.top
@@ -138,7 +141,8 @@ public:
      * @param visible_
      * @param lock_
      */
-    explicit Annotation(const BoxLabel& label, bool visible_ = true, bool lock_ = false);
+    explicit
+    Annotation(const BoxLabel& label, DatasetFormat fmt, bool visible_ = true, bool lock_ = false);
 
     /**
      * @brief Annotation construct from part of cloud points

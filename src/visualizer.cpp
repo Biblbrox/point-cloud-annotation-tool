@@ -208,7 +208,7 @@ void Visualizer::groundColorPoint(std::vector<int> &slice)
 }
 
 
-void Visualizer::createAnnotationFromSelectPoints(string type)
+void Visualizer::createAnnotationFromSelectPoints(const string& type)
 {
     if (m_last_selected_slice.size() > 3) {
         Annotation *anno = new Annotation(m_cloud, m_last_selected_slice, type, m_img);
@@ -220,7 +220,7 @@ void Visualizer::createAnnotationFromSelectPoints(string type)
     }
 }
 
-void Visualizer::typeButtonClickedProcess(string type)
+void Visualizer::typeButtonClickedProcess(const string& type)
 {
     // QMessageBox::information(this, QString::fromStdString("information"),QString::fromStdString(type));
     if (m_currPickedAnnotation) {
@@ -462,22 +462,22 @@ void Visualizer::save()
     m_annoManager->saveAnnotations(m_annotationFileName);
 }
 
-void Visualizer::loadBinFile(string filename_, PointCloudT &cloud_)
+void Visualizer::loadBinFile(const string& filename, PointCloudT &cloud)
 {
-    std::ifstream input(filename_.c_str(), std::ios_base::binary);
+    std::ifstream input(filename.c_str(), std::ios_base::binary);
     if (!input.good()) {
-        std::cerr << "Cannot open file : " << filename_ << std::endl;
+        std::cerr << "Cannot open file : " << filename << std::endl;
         return;
     }
 
-    cloud_.clear();
-    cloud_.height = 1;
+    cloud.clear();
+    cloud.height = 1;
 
     for (int i = 0; input.good() && !input.eof(); i++) {
         PointT point;
         input.read((char *) &point.x, 3 * sizeof(double));
         input.read((char *) &point.intensity, sizeof(double));
-        cloud_.push_back(point);
+        cloud.push_back(point);
     }
     input.close();
 }

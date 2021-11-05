@@ -15,14 +15,14 @@ using namespace std;
 class Visualizer:public QMainWindow
 {
 public:
-    explicit Visualizer(DatasetFormat datasetType, QWidget *parent = 0);
+    explicit Visualizer(DatasetFormat datasetType, QWidget* parent = 0);
     ~Visualizer();
     void highlightPoint(vector<int>& slice);
     void defaultColorPoint(vector<int>& slice);
     void groundColorPoint(vector<int>& slice);
     void pickAnnotation(double x,double y);
-    void createAnnotationFromSelectPoints(string type="unknown");
-    void typeButtonClickedProcess(string type);
+    void createAnnotationFromSelectPoints(const string& type="unknown");
+    void typeButtonClickedProcess(const string& filename);
     void updateCloud();
 
 protected:
@@ -74,7 +74,7 @@ protected:
      * @param filename_
      * @param cloud_
      */
-    void loadBinFile(string filename_, PointCloudT &cloud_);
+    void loadBinFile(const string& filename, PointCloudT &cloud);
     void planeDetect();
     void threshold();
 
@@ -95,7 +95,7 @@ private:
     vtkSmartPointer<vtkOrientationMarkerWidget> m_axesWidget;
 
     // for pick
-    Annotation *m_currPickedAnnotation;
+    Annotation* m_currPickedAnnotation;
 
     DatasetFormat m_datasetType;
 };

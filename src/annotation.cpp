@@ -15,8 +15,8 @@
 
 using namespace std;
 
-Annotation::Annotation(const BoxLabel& label, bool visible_, bool lock_)
-        : m_visible(visible_), m_lock(lock_), m_type(label.type)
+Annotation::Annotation(const BoxLabel& label, DatasetFormat fmt, bool visible, bool lock)
+        : m_visible(visible), m_lock(lock), m_type(label.type)
 {
     // init variable
     initial();
@@ -24,25 +24,32 @@ Annotation::Annotation(const BoxLabel& label, bool visible_, bool lock_)
     // apply transform
     vtkSmartPointer<vtkTransform> cubeTransform = vtkSmartPointer<vtkTransform>::New();
     cubeTransform->PostMultiply();
-    cubeTransform->Scale(label.detail.length, label.detail.width, label.detail.height);
-    //        cubeTransform->RotateZ(label.detail.yaw);
-    cubeTransform->RotateZ(vtkMath::DegreesFromRadians(label.detail.yaw));
-    cubeTransform->Translate(label.detail.center_x, label.detail.center_y, label.detail.center_z);
+    if (fmt == DatasetFormat::KITTI) {
+        cubeTransform->Scale(label.detail.width, label.detail.length, label.detail.height);
+        cubeTransform->RotateZ(vtkMath::DegreesFromRadians(-label.detail.yaw));
+        cubeTransform->Translate(label.detail.center_z,
+                                 -label.detail.center_x,
+                                 -label.detail.center_y + label.detail.length / 2);
+    } else {
+        cubeTransform->Scale(label.detail.length, label.detail.width, label.detail.height);
+        cubeTransform->RotateZ(vtkMath::DegreesFromRadians(label.detail.yaw));
+        cubeTransform->Translate(label.detail.center_x, label.detail.center_y, label.detail.center_z);
+    }
 
     applyTransform(cubeTransform);
 }
 
-Annotation::Annotation(const PointCloudTPtr cloud, vector<int> &slice, string type_, cv::Mat img)
+Annotation::Annotation(const PointCloudTPtr cloud, vector<int> &slice, string type, cv::Mat img)
         : m_img(std::move(img))
 {
     double p1[3];
     double p2[3];
     computeOBB(cloud, slice, p1, p2);
-    BoxLabel label(p1, p2, type_);
+    BoxLabel label(p1, p2, type);
 
     setAnchorPoint(cloud, slice);
 
-    m_type = type_;
+    m_type = type;
 
     // Select bbox from image
     std::string roiWindow = "Select ROI";
@@ -432,10 +439,12 @@ void Annotations::loadAnnotations(const string& filename)
     while (input >> type) {
         BoxLabel label;
         label.type = type;
+
+        // TODO: for kitti order is another
         for (double& j : label.data)
             input >> j;
 
-        m_annotations.push_back(new Annotation(label));
+        m_annotations.push_back(new Annotation(label, m_datasetType));
     }
     std::cout << filename << ": load " << m_annotations.size() << " boxes" << std::endl;
     input.close();
@@ -456,7 +465,7 @@ void Annotations::saveAnnotations(const string& filename)
     output.close();
 }
 
-vector<Annotation *> &Annotations::getAnnotations()
+vector<Annotation*>& Annotations::getAnnotations()
 {
     return m_annotations;
 }
