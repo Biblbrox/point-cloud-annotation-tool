@@ -8,6 +8,7 @@ Now tool testing for KITTI label support.
 - point cloud selection
 - 3d box generation and adaption 
 - ground remove using threhold or plane detect
+- kitt label format
 
 ### usage 
 - if *cloud.bin* is open, then *cloud.bin.txt* will be the annotation file to be loaded if exist.
